@@ -18,7 +18,10 @@ export interface BeforeEachCycleOptions {
    */
   getHooks(suite: Suite): Pick<SuiteHooks, "afterEach" | "beforeEach">
 }
-
+/**
+ * @summary
+ * Gets all the hooks to run the suite for a test.
+ */
 function deriveSuiteListeners(
   suite: Suite,
   getHooks: (suite: Suite) => Pick<SuiteHooks, "afterEach" | "beforeEach">

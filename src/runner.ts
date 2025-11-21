@@ -20,14 +20,7 @@ export class VitestBenchRunner
   implements VitestRunner
 {
   // todo: ensure this can take multiple things like minimum time of cycles.
-  #config = {
-    benchmark: {
-      cycles: 64
-    },
-    warmup: {
-      cycles: 10
-    }
-  }
+  #config: Record<"benchmark" | "warmup", Record<"cycles", number>>
 
   // Allowing Vitest to run the `each` hooks means we don't have access to the
   // cleanup function from `beforeEach`.
@@ -45,6 +38,18 @@ export class VitestBenchRunner
     }
 
     super(config)
+
+    const options = JSON.parse(
+      process.env["VITEST_RUNNER_BENCHMARK_OPTIONS"] ?? "{}"
+    )
+
+    const bcycles = options?.benchmark?.cycles || 64
+    const wcycles = options?.warmup?.cycles || 10
+
+    this.#config = {
+      benchmark: { cycles: bcycles },
+      warmup: { cycles: wcycles }
+    }
   }
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
