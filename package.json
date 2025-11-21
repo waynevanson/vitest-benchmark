@@ -2,7 +2,7 @@
   "name": "vitest-runner-bench",
   "version": "0.0.0",
   "devDependencies": {
-    "@types/node": "^22.19.1",
+    "@types/node": "^22.10.1",
     "@vitest/runner": "^4.0.12",
     "typescript": "^5.9.3",
     "vitest": "^4.0.12"
@@ -12,6 +12,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./reporter": {
+      "types": "./dist/reporter.d.ts",
+      "default": "./dist/reporter.js"
     }
   },
   "scripts": {
