@@ -33,18 +33,23 @@ function deriveSuiteListeners(
     afters: Array<AfterEachListener>
   }> = []
 
-  let parent: Suite | undefined = suite
-  while (parent) {
-    const hooks = getHooks(parent)
+  function collect(suite: Suite) {
+    const hooks = getHooks(suite)
     const item = {
       befores: hooks.beforeEach,
       afters: hooks.afterEach
     }
-
     listeners.unshift(item)
+  }
 
+  let parent: Suite | undefined = suite
+  while (parent) {
+    collect(parent)
     parent = parent.suite
   }
+
+  // `config.setupFiles`
+  collect(suite.file)
 
   return listeners
 }

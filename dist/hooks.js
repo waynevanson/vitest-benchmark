@@ -8,16 +8,21 @@ function deriveSuiteListeners(suite, getHooks) {
     // collect all the `beforeEach` callbacks.
     // we keep these together so the order between cleanups is known.
     const listeners = [];
-    let parent = suite;
-    while (parent) {
-        const hooks = getHooks(parent);
+    function collect(suite) {
+        const hooks = getHooks(suite);
         const item = {
             befores: hooks.beforeEach,
             afters: hooks.afterEach
         };
         listeners.unshift(item);
+    }
+    let parent = suite;
+    while (parent) {
+        collect(parent);
         parent = parent.suite;
     }
+    // `config.setupFiles`
+    collect(suite.file);
     return listeners;
 }
 export function createBeforeEachCycle(test, options) {

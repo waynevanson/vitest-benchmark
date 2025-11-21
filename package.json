@@ -1,6 +1,6 @@
 {
   "name": "vitest-runner-benchmark",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@vitest/runner": "^4.0.12",

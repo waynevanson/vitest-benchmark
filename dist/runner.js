@@ -15,6 +15,7 @@ export class VitestBenchRunner extends VitestTestRunner {
     // Instead we'll move them here before Vitest can read them,
     // and call them per cycle.
     #hooks = new WeakMap();
+    #files = new Map();
     constructor(config) {
         if (config.sequence.concurrent) {
             throw new Error("Expected config.sequence.concurrent to be falsey");
@@ -59,6 +60,7 @@ export class VitestBenchRunner extends VitestTestRunner {
         }
         for (let count = 1; count <= this.#config.benchmark.cycles; count++) {
             const afterEachCycle = await beforeEachCycle();
+            // todo: performance buffer will run out of room.
             // todo: log a cycle event
             performance.mark(`${test.id}:open:${count}`);
             await fn();

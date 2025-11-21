@@ -4,7 +4,12 @@ import {
   type SuiteHooks,
   type Test
 } from "@vitest/runner"
-import type { SerializedConfig, TestArtifactBase, TestAttachment } from "vitest"
+import type {
+  RunnerTestFile,
+  SerializedConfig,
+  TestArtifactBase,
+  TestAttachment
+} from "vitest"
 import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
@@ -27,6 +32,8 @@ export class VitestBenchRunner
   // Instead we'll move them here before Vitest can read them,
   // and call them per cycle.
   #hooks = new WeakMap<Suite, Pick<SuiteHooks, "afterEach" | "beforeEach">>()
+
+  #files = new Map<RunnerTestFile, Promise<unknown>>()
 
   constructor(config: SerializedConfig) {
     if (config.sequence.concurrent) {
@@ -87,6 +94,7 @@ export class VitestBenchRunner
 
     for (let count = 1; count <= this.#config.benchmark.cycles; count++) {
       const afterEachCycle = await beforeEachCycle()
+      // todo: performance buffer will run out of room.
       // todo: log a cycle event
       performance.mark(`${test.id}:open:${count}`)
       await fn()
