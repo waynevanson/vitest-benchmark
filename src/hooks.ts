@@ -46,20 +46,6 @@ function deriveSuiteListeners(
   return listeners
 }
 
-function* decrements(max: number, min: number) {
-  let number = max
-  while (max >= min) {
-    yield number--
-  }
-}
-
-function* increments(min: number, max: number) {
-  let number = min
-  while (min <= max) {
-    yield number++
-  }
-}
-
 export function createBeforeEachCycle(
   test: Test,
   options: BeforeEachCycleOptions

@@ -4,6 +4,7 @@ import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
 import { createBeforeEachCycle } from "./hooks.js"
+import { increments } from "./iterator.js"
 
 /**
  * @summary
@@ -35,7 +36,7 @@ export default class VitestBenchRunner
       cycles: 64
     },
     warmup: {
-      cycles: 10
+      cycles: 64
     }
   }
   #tests = new Set<Test>()
@@ -58,6 +59,7 @@ export default class VitestBenchRunner
   // becuase we need to order the hooks as we (call them)? in `onBeforeEachSuite`
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
+  // This may cause some issues for some Vitest internals but we we can get to that later.
   async onBeforeRunSuite(suite: Suite): Promise<void> {
     const hooks = getHooks(suite)
 
@@ -92,24 +94,27 @@ export default class VitestBenchRunner
   async runTask(test: Test) {
     const fn = getFn(test)
 
-    let warmups = 1
-
-    let benchmarks = 1
-
-    async function benchmark() {
-      performance.mark(`${test.id}:open:${benchmarks}`)
-      await fn()
-      performance.mark(`${test.id}:shut:${benchmarks}`)
-    }
-
     const beforeEachCycle = createBeforeEachCycle(test, {
       sequence: this.config.sequence.hooks,
       getHooks: this.getHooks.bind(this)
     })
 
-    const afterEachCycle = await beforeEachCycle()
-    await fn()
-    await afterEachCycle()
+    for (const _ of increments(1, this.#config.warmup.cycles)) {
+      const afterEachCycle = await beforeEachCycle()
+      await fn()
+      await afterEachCycle()
+    }
+
+    for (const count of increments(1, this.#config.benchmark.cycles)) {
+      const afterEachCycle = await beforeEachCycle()
+      performance.mark(`${test.id}:open:${count}`)
+      await fn()
+      performance.mark(`${test.id}:shut:${count}`)
+      await afterEachCycle()
+    }
+
+    // test.result!.state === "pass"
+    console.log("end")
 
     this.#tests.add(test)
   }
