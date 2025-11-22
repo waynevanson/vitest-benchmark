@@ -5,10 +5,10 @@ const {
   beforeEachBoth,
   beforeEachOnly
   //@ts-ignore
-} = global["SETUP_FILE_GLOBAL_HOOKS"]
+} = global["RUNNER_SPEC_TS"]
 
 let ran = false
-test.skip("should call top level hooks only once", () => {
+test("should call top level hooks only once", () => {
   expect(beforeEachOnly).toHaveBeenCalled()
   expect(beforeEachBoth).toHaveBeenCalled()
 

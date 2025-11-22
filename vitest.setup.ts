@@ -1,22 +1,23 @@
 import { afterEach, beforeEach, vi } from "vitest"
 
-// this file is being import but it's not being run.
-export default {}
+function createGlobalEachListeners() {
+  const beforeEachOnly = vi.fn()
+  beforeEach(beforeEachOnly)
 
-const afterEachOnly = vi.fn()
-const afterEachBoth = vi.fn()
+  const afterEachOnly = vi.fn()
+  afterEach(afterEachOnly)
 
-const beforeEachOnly = vi.fn()
-const beforeEachBoth = vi.fn(() => afterEachBoth)
+  const afterEachBoth = vi.fn()
+  const beforeEachBoth = vi.fn(() => afterEachBoth)
+  beforeEach(beforeEachBoth)
 
-//@ts-ignore
-globalThis["SETUP_FILE_GLOBAL_HOOKS"] = {
-  afterEachBoth,
-  afterEachOnly,
-  beforeEachOnly,
-  beforeEachBoth
+  return {
+    beforeEachOnly,
+    afterEachOnly,
+    beforeEachBoth,
+    afterEachBoth
+  }
 }
 
-beforeEach(beforeEachOnly)
-beforeEach(beforeEachBoth)
-afterEach(afterEachOnly)
+//@ts-ignore
+globalThis["RUNNER_SPEC_TS"] = createGlobalEachListeners()

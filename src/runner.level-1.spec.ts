@@ -1,15 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { describe, expect, test } from "vitest"
 
-describe("local", ({}) => {
-  const afterEachOnly = vi.fn()
-  const afterEachBoth = vi.fn()
-
-  const beforeEachOnly = vi.fn()
-  const beforeEachBoth = vi.fn(() => afterEachBoth)
-
-  beforeEach(beforeEachOnly)
-  beforeEach(beforeEachBoth)
-  afterEach(afterEachOnly)
+describe("from setup file", () => {
+  const {
+    afterEachBoth,
+    afterEachOnly,
+    beforeEachBoth,
+    beforeEachOnly
+    //@ts-ignore
+  } = global["RUNNER_SPEC_TS"]
 
   let ran = false
   test("calls hooks", () => {

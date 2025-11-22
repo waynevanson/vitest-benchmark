@@ -22,8 +22,8 @@ export interface BeforeEachCycleOptions {
  * @summary
  * Gets all the hooks to run the suite for a test.
  */
-function deriveSuiteListeners(
-  suite: Suite,
+function deriveTestListeners(
+  test: Test,
   getHooks: (suite: Suite) => Pick<SuiteHooks, "afterEach" | "beforeEach">
 ) {
   // collect all the `beforeEach` callbacks.
@@ -42,14 +42,15 @@ function deriveSuiteListeners(
     listeners.unshift(item)
   }
 
-  let parent: Suite | undefined = suite
-  while (parent) {
+  // only for suites and not files
+  let parent: Suite | undefined = test.suite
+  while (parent && parent !== test.file) {
     collect(parent)
     parent = parent.suite
   }
 
-  // `config.setupFiles`
-  collect(suite.file)
+  // collect from `config.setupFiles`
+  collect(test.file)
 
   return listeners
 }
@@ -61,7 +62,7 @@ export function createBeforeEachCycle(
   return async function beforeEachCycle() {
     const suite = test.suite ?? test.file
 
-    const suitesListeners = deriveSuiteListeners(suite, options.getHooks)
+    const suitesListeners = deriveTestListeners(test, options.getHooks)
 
     const traverse = options.sequence === "parallel" ? parallel : series
 

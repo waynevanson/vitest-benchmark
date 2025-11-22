@@ -4,7 +4,7 @@
  * @summary
  * Gets all the hooks to run the suite for a test.
  */
-function deriveSuiteListeners(suite, getHooks) {
+function deriveTestListeners(test, getHooks) {
     // collect all the `beforeEach` callbacks.
     // we keep these together so the order between cleanups is known.
     const listeners = [];
@@ -16,19 +16,20 @@ function deriveSuiteListeners(suite, getHooks) {
         };
         listeners.unshift(item);
     }
-    let parent = suite;
-    while (parent) {
+    // only for suites and not files
+    let parent = test.suite;
+    while (parent && parent !== test.file) {
         collect(parent);
         parent = parent.suite;
     }
-    // `config.setupFiles`
-    collect(suite.file);
+    // collect from `config.setupFiles`
+    collect(test.file);
     return listeners;
 }
 export function createBeforeEachCycle(test, options) {
     return async function beforeEachCycle() {
         const suite = test.suite ?? test.file;
-        const suitesListeners = deriveSuiteListeners(suite, options.getHooks);
+        const suitesListeners = deriveTestListeners(test, options.getHooks);
         const traverse = options.sequence === "parallel" ? parallel : series;
         const cleanups = await traverse(suitesListeners.map((suiteListeners) => async () => {
             const unknowns = await traverse(suiteListeners.befores.map((before) => () => before(test.context, suite)));
