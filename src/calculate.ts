@@ -1,4 +1,4 @@
-type Calculation = {
+export interface Calculation {
   minimum_value?: number
   maximum_value?: number
   value: number

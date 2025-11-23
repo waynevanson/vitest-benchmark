@@ -4,6 +4,7 @@ import {
   TestModule,
   TestRunEndReason
 } from "vitest/node"
+import { Calculations } from "./calculate.js"
 
 // where to save this shit to?
 export default class BMFReporter implements Reporter {
@@ -14,7 +15,7 @@ export default class BMFReporter implements Reporter {
   ) {
     if (reason !== "passed" || unhandledErrors.length > 0) return
 
-    const bmf = {}
+    const bmf: Record<string, Calculations> = {}
 
     for (const testModule of testModules) {
       for (const testCase of testModule.children.allTests()) {
@@ -27,13 +28,11 @@ export default class BMFReporter implements Reporter {
         const name = [testModule.project.name, testCase.fullName]
           .filter(Boolean)
           .join(" # ")
-        const measures = meta.bench.calculations
 
-        //@ts-expect-error
-        bmf[name] = measures
+        bmf[name] = meta.bench.calculations
       }
     }
 
-    console.log(bmf)
+    console.log(JSON.stringify(bmf))
   }
 }

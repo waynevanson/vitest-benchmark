@@ -18,6 +18,6 @@ export default class BMFReporter {
                 bmf[name] = measures;
             }
         }
-        console.log(bmf);
+        console.log(JSON.stringify(bmf));
     }
 }
