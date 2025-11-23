@@ -8,7 +8,7 @@ const {
 } = global["RUNNER_SPEC_TS"]
 
 let ran = false
-test("should call top level hooks only once", () => {
+test("should call top level hooks only once", async () => {
   expect(beforeEachOnly).toHaveBeenCalled()
   expect(beforeEachBoth).toHaveBeenCalled()
 

@@ -4,5 +4,6 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "esnext"
-  }
+  },
+  "exclude": ["dist"]
 }

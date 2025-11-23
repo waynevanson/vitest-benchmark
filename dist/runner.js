@@ -1,7 +1,7 @@
-import { recordArtifact } from "@vitest/runner";
 import { VitestTestRunner } from "vitest/runners";
 import { getFn, getHooks, setHooks } from "vitest/suite";
 import { createBeforeEachCycle } from "./hooks.js";
+import { calculate } from "./calculate.js";
 /**
  * @summary
  * A `VitestRunner` that runs tests as benchmarks.
@@ -15,7 +15,6 @@ export class VitestBenchRunner extends VitestTestRunner {
     // Instead we'll move them here before Vitest can read them,
     // and call them per cycle.
     #hooks = new WeakMap();
-    #files = new Map();
     constructor(config) {
         if (config.sequence.concurrent) {
             throw new Error("Expected config.sequence.concurrent to be falsey");
@@ -25,8 +24,8 @@ export class VitestBenchRunner extends VitestTestRunner {
         }
         super(config);
         const options = JSON.parse(process.env["VITEST_RUNNER_BENCHMARK_OPTIONS"] ?? "{}");
-        const bcycles = options?.benchmark?.cycles || 64;
-        const wcycles = options?.warmup?.cycles || 10;
+        const bcycles = options?.benchmark?.cycles ?? 64;
+        const wcycles = options?.warmup?.cycles ?? 10;
         this.#config = {
             benchmark: { cycles: bcycles },
             warmup: { cycles: wcycles }
@@ -58,20 +57,26 @@ export class VitestBenchRunner extends VitestTestRunner {
             await fn();
             await afterEachCycle();
         }
+        const samples = [];
         for (let count = 1; count <= this.#config.benchmark.cycles; count++) {
             const afterEachCycle = await beforeEachCycle();
-            // todo: performance buffer will run out of room.
+            const start = performance.now();
             // todo: log a cycle event
-            performance.mark(`${test.id}:open:${count}`);
             await fn();
-            performance.mark(`${test.id}:shut:${count}`);
+            const end = performance.now();
+            const delta = end - start;
+            samples.push(delta);
+            // reset `expect.assertions(n)` because it sums over each test call.
+            test.context.expect.setState({ assertionCalls: 0 });
             // todo: log a cycle event
             await afterEachCycle();
         }
-        await recordArtifact(test, {
-            type: "benchmark:samples",
-            attachments: [this.createBenchmarkAttachment.call(this, test.id)]
-        });
+        const calculations = calculate(samples, this.#config.benchmark.cycles);
+        // A place where reporters can read stuff
+        test.meta.bench = {
+            expected: this.#config.benchmark.cycles,
+            calculations
+        };
     }
     getHooks(suite) {
         const hooks = this.#hooks.get(suite);
@@ -79,29 +84,6 @@ export class VitestBenchRunner extends VitestTestRunner {
             throw new Error(`Expected to get hooks for the suite ${suite.name}`);
         }
         return hooks;
-    }
-    // Send length of cycles to a reporter
-    createBenchmarkAttachment(id) {
-        // todo: handle range for skipped tests
-        const samples = Array.from({ length: this.#config.benchmark.cycles }, (_, index) => {
-            const counter = index + 1;
-            const open = `${id}:open:${counter}`;
-            const shut = `${id}:shut:${counter}`;
-            const measure = performance.measure(open, shut);
-            return measure.duration;
-        });
-        const body = JSON.stringify(samples);
-        return { contentType: "application/json", body };
-    }
-}
-const ARTEFACT_BENCHMARK = Symbol("ARTEFACT_BENCHMARK");
-function* window(iterator) {
-    let a = iterator.next();
-    let b = iterator.next();
-    while (!a.done && !b.done) {
-        yield [a.value, b.value];
-        a = b;
-        b = iterator.next();
     }
 }
 export default VitestBenchRunner;

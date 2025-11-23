@@ -2,17 +2,16 @@ import { defineConfig } from "vitest/config"
 
 process.env["VITEST_RUNNER_BENCHMARK_OPTIONS"] = JSON.stringify({
   benchmark: {
-    cycles: 1_000
+    cycles: 64
   },
   warmup: {
-    cycles: 1_000
+    cycles: 10
   }
 })
 
 export default defineConfig({
   test: {
     runner: "./dist/runner.js",
-    reporters: ["./dist/reporter.js", "default"],
     setupFiles: ["./vitest.setup.ts"]
   }
 })
