@@ -13,9 +13,7 @@ export default class BMFReporter {
                 const name = [testModule.project.name, testCase.fullName]
                     .filter(Boolean)
                     .join(" # ");
-                const measures = meta.bench.calculations;
-                //@ts-expect-error
-                bmf[name] = measures;
+                bmf[name] = meta.bench.calculations;
             }
         }
         console.log(JSON.stringify(bmf));
