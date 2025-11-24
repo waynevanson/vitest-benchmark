@@ -40,12 +40,12 @@ import { defineConfig } from 'vitest/config'
 // These are all the options available.
 process.env["VITEST_RUNNER_BENCHMARK_OPTIONS"] = JSON.stringify({
   benchmark: {
-    // n > 0
-    cycles: 64
+    minCycles: 64,
+    minMs: 5_000
   },
   warmup: {
-    // n >=0
-    cycles: 10
+    minCycles: 10,
+    minMs: 200
   }
 })
 
@@ -55,10 +55,7 @@ export default defineConfig({
         runner: "./node_modules/vitest-runner-benchmark/runner"
 
         // optionally, add the extra reporter
-        reporters: ["default", "./node_modules/vitest-runner-benchmark/reporter"]
-
-        // optionally, log the reporters' BMF output to a file.
-        outDir: ".benchmarks.json"
+        reporters: ["default", "./node_modules/vitest-runner-benchmark/bmf-reporter"]
     }
 })
 ```
@@ -84,6 +81,7 @@ All your tests should pass. If not, feel free to raise an issue.
       "max_value": 0.9837483434
     }
   }
+  // ... other benchmarks here.
 }
 ```
 
