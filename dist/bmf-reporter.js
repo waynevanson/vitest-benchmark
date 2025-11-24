@@ -7,6 +7,9 @@ export class BMFReporter {
         for (const testModule of testModules) {
             for (const testCase of testModule.children.allTests()) {
                 const meta = testCase.meta();
+                if (testCase.result().state !== "passed") {
+                    continue;
+                }
                 if (!meta.bench) {
                     throw new Error("Expected test to report a benchmark");
                 }
