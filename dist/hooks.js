@@ -18,7 +18,7 @@ function deriveTestListeners(test, getHooks) {
     }
     // only for suites and not files
     let parent = test.suite;
-    while (parent && parent !== test.file) {
+    while (parent) {
         collect(parent);
         parent = parent.suite;
     }
