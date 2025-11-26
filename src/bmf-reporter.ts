@@ -31,6 +31,16 @@ export class BMFReporter implements Reporter {
           .filter(Boolean)
           .join(" # ")
 
+        if (name in bmf) {
+          throw new Error(
+            [
+              `Expected "${name}" not to exist as a benchmark name.`,
+              `Please remove duplicate test names.`,
+              `If these tests are in two different projects, please add a project name in the vitest config to fix.`
+            ].join("\n")
+          )
+        }
+
         bmf[name] = meta.bench.calculations
       }
     }
