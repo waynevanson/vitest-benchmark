@@ -1,7 +1,6 @@
 import {
   Reporter,
   SerializedError,
-  TestCase,
   TestModule,
   TestRunEndReason,
   Vitest
@@ -13,9 +12,7 @@ export interface BMFReporterConfig {
   outputFile: undefined | string
 }
 
-// todo: allow saving to file
 // todo: allow template syntax for saving names
-// todo: allow configuring what measures to create
 export class BMFReporter implements Reporter {
   config: BMFReporterConfig = { outputFile: undefined }
 

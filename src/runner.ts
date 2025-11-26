@@ -11,6 +11,8 @@ import { createBeforeEachCycle } from "./hooks.js"
  * A `VitestRunner` that runs tests as benchmarks.
  */
 // todo: remove assertions via vite plugin?
+// todo: allow configuring what measures to create
+// todo: add tracing
 export class VitestBenchRunner
   extends VitestTestRunner
   implements VitestRunner
@@ -111,6 +113,7 @@ export class VitestBenchRunner
       duration < this.#config.warmup.minMs
     ) {
       duration += await cycle()
+      cycles++
     }
 
     // benchmark
@@ -125,6 +128,7 @@ export class VitestBenchRunner
       const sample = await cycle()
       duration += sample
       samples.push(sample)
+      cycles++
     }
 
     const calculations = calculate(samples, cycles)
