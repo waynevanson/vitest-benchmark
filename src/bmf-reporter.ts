@@ -6,7 +6,9 @@ import {
 } from "vitest/node"
 import { Calculations } from "./calculate.js"
 
-// where to save this shit to?
+// todo: allow saving to file
+// todo: allow template syntax for saving names
+// todo: allow configuring what measures to create
 export class BMFReporter implements Reporter {
   async onTestRunEnd(
     testModules: ReadonlyArray<TestModule>,
@@ -18,12 +20,8 @@ export class BMFReporter implements Reporter {
     const bmf: Record<string, Calculations> = {}
 
     for (const testModule of testModules) {
-      for (const testCase of testModule.children.allTests()) {
+      for (const testCase of testModule.children.allTests("passed")) {
         const meta = testCase.meta()
-
-        if (testCase.result().state !== "passed") {
-          continue
-        }
 
         if (!meta.bench) {
           throw new Error("Expected test to report a benchmark")
