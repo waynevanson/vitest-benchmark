@@ -1,16 +1,32 @@
 import {
   Reporter,
   SerializedError,
+  TestCase,
   TestModule,
-  TestRunEndReason
+  TestRunEndReason,
+  Vitest
 } from "vitest/node"
 import { Calculations } from "./calculate.js"
+import { writeFileSync } from "node:fs"
+
+export interface BMFReporterConfig {
+  outputFile: undefined | string
+}
 
 // todo: allow saving to file
 // todo: allow template syntax for saving names
 // todo: allow configuring what measures to create
 export class BMFReporter implements Reporter {
-  async onTestRunEnd(
+  config: BMFReporterConfig = { outputFile: undefined }
+
+  onInit(vitest: Vitest) {
+    this.config.outputFile =
+      typeof vitest.config.outputFile === "string"
+        ? vitest.config.outputFile
+        : vitest.config.outputFile.bmf
+  }
+
+  onTestRunEnd(
     testModules: ReadonlyArray<TestModule>,
     unhandledErrors: ReadonlyArray<SerializedError>,
     reason: TestRunEndReason
@@ -45,7 +61,13 @@ export class BMFReporter implements Reporter {
       }
     }
 
-    console.log(JSON.stringify(bmf))
+    const data = JSON.stringify(bmf)
+
+    if (this.config.outputFile) {
+      writeFileSync(this.config.outputFile, data, { encoding: "utf8" })
+    } else {
+      console.log(data)
+    }
   }
 }
 
