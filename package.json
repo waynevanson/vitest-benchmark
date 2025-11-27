@@ -1,6 +1,6 @@
 {
   "name": "vitest-runner-benchmark",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@vitest/runner": "^4.0.12",
@@ -32,7 +32,7 @@
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
-    "benchmark": "vitest run --reporter ./dist/bmf-reporter.js"
+    "benchmark": "vitest run"
   },
   "packageManager": "pnpm@10.22.0"
 }
