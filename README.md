@@ -34,29 +34,27 @@ npm install @waynevanson/vitest-benchmark
 
 import { defineConfig } from 'vitest/config'
 
-// Vitest doesn't allow us to pass extra information via config,
-// so we need to use environment variables.
-//
-// These are all the options available.
-process.env["VITEST_RUNNER_BENCHMARK_OPTIONS"] = JSON.stringify({
-  benchmark: {
-    minCycles: 64,
-    minMs: 5_000
-  },
-  warmup: {
-    minCycles: 10,
-    minMs: 200
-  }
-})
-
 export default defineConfig({
-    test: {
-        // required. You'll likely want to control this with an environment variable
-        runner: "./node_modules/@waynevanson/vitest-benchmark/runner"
+  test: {
+      // required. You'll likely want to control this with an environment variable
+      runner: "./node_modules/@waynevanson/vitest-benchmark/runner"
 
-        // optionally, add the extra reporter
-        reporters: ["default", "./node_modules/@waynevanson/vitest-benchmark/bmf-reporter"]
+      // optionally, add the extra reporter
+      reporters: ["default", "./node_modules/@waynevanson/vitest-benchmark/bmf-reporter"],
+      provide: {
+        // Confiure the runner here
+        benchrunner: {
+          benchmark: {
+          minCycles: 64,
+          minMs: 5_000
+        },
+        warmup: {
+          minCycles: 10,
+          minMs: 200
+        }
+      }
     }
+  }
 })
 ```
 
