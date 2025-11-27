@@ -74,7 +74,7 @@ export class VitestBenchRunner extends VitestTestRunner {
         // warmup
         cycles = 0;
         duration = 0;
-        while (cycles < this.#config.warmup.minCycles &&
+        while (cycles < this.#config.warmup.minCycles ||
             duration < this.#config.warmup.minMs) {
             duration += await cycle();
             cycles++;
@@ -83,7 +83,7 @@ export class VitestBenchRunner extends VitestTestRunner {
         cycles = 0;
         duration = 0;
         const samples = [];
-        while (cycles < this.#config.benchmark.minCycles &&
+        while (cycles < this.#config.benchmark.minCycles ||
             duration < this.#config.benchmark.minMs) {
             const sample = await cycle();
             duration += sample;
