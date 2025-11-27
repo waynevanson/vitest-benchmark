@@ -1,4 +1,5 @@
 export function calculate(samples, cycles) {
+    samples.sort();
     const time = samples.reduce((accu, curr) => accu + curr, 0);
     const latency = {
         minimum_value: samples.reduce((accu, curr) => Math.min(accu, curr)),
@@ -11,18 +12,30 @@ export function calculate(samples, cycles) {
         maximum_value: cycles / (latency.minimum_value * samples.length)
     };
     // todo: percentiles of these two measures.
-    return { latency, throughput };
+    const percentiles = calculatePercentiles(samples, [50, 70, 80, 90, 95, 98, 99]);
+    return { latency, throughput, ...percentiles };
 }
-function calculatePercentilesLatency() { }
-function calculatePercentileSum(samples, percentile) {
-    // percentile => (0, length] -> (0, 100]
-    function scale(value) {
-        return (value * samples.length) / 100;
+function calculatePercentiles(samples, percentiles) {
+    const measures = {};
+    for (const percentile of percentiles) {
+        const name = `P${percentile}`;
+        measures[name] = {
+            value: calculatePercentile(samples, percentile)
+        };
     }
-    const float = scale(percentile);
-    const wholeIndex = Math.ceil(float);
-    const aa = samples.slice(wholeIndex);
-    const whole = aa.reduce((accu, curr) => accu + curr, 0);
-    // todo: get the remainding floating bit at the bottom
-    return whole / aa.length;
+    return measures;
+}
+// Thanks GPT
+function calculatePercentile(samples, percentile) {
+    samples.sort();
+    const m = samples.length - 1;
+    const r = (percentile / 100) * m;
+    const i = Math.floor(r);
+    const f = r - i;
+    if (i === m) {
+        return samples[i];
+    }
+    else {
+        return samples[i] * (1 - f) + samples[i + 1] * f;
+    }
 }

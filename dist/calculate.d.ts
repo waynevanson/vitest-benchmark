@@ -3,8 +3,6 @@ export interface Calculation {
     maximum_value?: number;
     value: number;
 }
-export interface Calculations {
-    latency: Calculation;
-    throughput: Calculation;
+export interface Calculations extends Record<string, Calculation> {
 }
 export declare function calculate(samples: Array<number>, cycles: number): Calculations;
