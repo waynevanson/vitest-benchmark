@@ -1,7 +1,15 @@
 {
   "name": "@waynevanson/vitest-benchmark",
   "description": "Vitest runners and reporters for benchmarking",
+  "author": {
+    "name": "Wayne Van Son"
+  },
   "version": "0.2.3",
+  "files": [
+    "dist",
+    "runner",
+    "bmf-reporter"
+  ],
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@vitest/runner": "^4.0.12",
