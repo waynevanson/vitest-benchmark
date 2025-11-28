@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@waynevanson/vitest-runner": "workspace:../.."
+  }
+}

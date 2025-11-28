@@ -2,8 +2,8 @@ import { defineConfig } from "vitest/config"
 
 export default defineConfig({
   test: {
+    maxWorkers: 1,
     setupFiles: ["./vitest.setup.ts"],
-    // exclude the fixtures in test files
-    exclude: ["./test/*/**"]
+    runner: "@waynevanson/vitest-benchmark/runner"
   }
 })

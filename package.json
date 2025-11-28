@@ -11,14 +11,14 @@
     "bmf-reporter"
   ],
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "@vitest/runner": "^4.0.12",
+    "@types/node": "^22.19.1",
+    "@vitest/runner": "^4.0.14",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.12"
+    "vitest": "^4.0.14"
   },
   "peerDependencies": {
-    "vitest": "^4.0.12",
-    "@vitest/runner": "^4.0.12"
+    "@vitest/runner": "^4.0.12",
+    "vitest": "^4.0.12"
   },
   "peerDependenciesMeta": {
     "vitest": {
@@ -47,5 +47,8 @@
     "build": "tsc -p ./tsconfig.build.json",
     "benchmark": "vitest run"
   },
-  "packageManager": "pnpm@10.22.0"
+  "packageManager": "pnpm@10.22.0",
+  "dependencies": {
+    "tinyrainbow": "^3.0.3"
+  }
 }
