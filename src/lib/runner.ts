@@ -1,10 +1,28 @@
 import { type Suite, type SuiteHooks, type Test } from "@vitest/runner"
+import * as v from "valibot"
 import { inject, type SerializedConfig } from "vitest"
 import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
 import { calculate, Calculations } from "./calculate.js"
 import { createBeforeEachCycle } from "./hooks.js"
+
+const warmup = v.object({
+  minCycles: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0)),
+  minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
+})
+
+const benchmark = v.object({
+  minCycles: v.pipe(v.exactOptional(v.number(), 1), v.minValue(1)),
+  minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
+})
+
+const config = v.object({
+  benchmark: v.exactOptional(benchmark, v.getDefaults(benchmark)),
+  warmup: v.exactOptional(warmup, v.getDefaults(warmup))
+})
+
+const schema = v.optional(config, v.getDefaults(config))
 
 export interface VitestBenchRunnerUserConfig {
   benchmark?: {
@@ -44,7 +62,7 @@ export interface VitestBenchRunnerConfig {
 
 declare module "vitest" {
   export interface ProvidedContext {
-    benchrunner: VitestBenchRunnerUserConfig
+    benchrunner?: VitestBenchRunnerUserConfig
   }
 }
 
@@ -80,16 +98,7 @@ export class VitestBenchRunner
 
     const options = inject("benchrunner")
 
-    this.#config = {
-      benchmark: {
-        minCycles: options?.benchmark?.minCycles ?? 1,
-        minMs: options?.benchmark?.minMs ?? 0
-      },
-      warmup: {
-        minCycles: options?.warmup?.minCycles ?? 1,
-        minMs: options?.warmup?.minMs ?? 0
-      }
-    }
+    this.#config = v.parse(schema, options)
   }
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.

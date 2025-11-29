@@ -1,8 +1,22 @@
+import * as v from "valibot";
 import { inject } from "vitest";
 import { VitestTestRunner } from "vitest/runners";
 import { getFn, getHooks, setHooks } from "vitest/suite";
 import { calculate } from "./calculate.js";
 import { createBeforeEachCycle } from "./hooks.js";
+const warmup = v.object({
+    minCycles: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0)),
+    minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
+});
+const benchmark = v.object({
+    minCycles: v.pipe(v.exactOptional(v.number(), 1), v.minValue(1)),
+    minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
+});
+const config = v.object({
+    benchmark: v.exactOptional(benchmark, v.getDefaults(benchmark)),
+    warmup: v.exactOptional(warmup, v.getDefaults(warmup))
+});
+const schema = v.optional(config, v.getDefaults(config));
 /**
  * @summary
  * A `VitestRunner` that runs tests as benchmarks.
@@ -26,16 +40,7 @@ export class VitestBenchRunner extends VitestTestRunner {
         }
         super(config);
         const options = inject("benchrunner");
-        this.#config = {
-            benchmark: {
-                minCycles: options?.benchmark?.minCycles ?? 1,
-                minMs: options?.benchmark?.minMs ?? 0
-            },
-            warmup: {
-                minCycles: options?.warmup?.minCycles ?? 1,
-                minMs: options?.warmup?.minMs ?? 0
-            }
-        };
+        this.#config = v.parse(schema, options);
     }
     // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
     // This may cause some issues for some Vitest internals but we we can get to that later.

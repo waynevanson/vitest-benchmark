@@ -37,7 +37,7 @@ export interface VitestBenchRunnerConfig {
 }
 declare module "vitest" {
     interface ProvidedContext {
-        benchrunner: VitestBenchRunnerUserConfig;
+        benchrunner?: VitestBenchRunnerUserConfig;
     }
 }
 /**

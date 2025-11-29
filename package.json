@@ -10,11 +10,10 @@
   ],
   "devDependencies": {
     "@types/node": "^22.19.1",
-    "@vitest/runner": "^4.0.14",
+    "@vitest/runner": "^4.0.12",
     "glob": "^13.0.0",
     "typescript": "^5.9.3",
-    "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.12"
   },
   "peerDependencies": {
     "@vitest/runner": "^4.0.12",
@@ -48,5 +47,8 @@
     "test": "vitest run",
     "benchmark": "BENCHMARK=1 vitest run"
   },
-  "packageManager": "pnpm@10.22.0"
+  "packageManager": "pnpm@10.22.0",
+  "dependencies": {
+    "valibot": "^1.2.0"
+  }
 }
