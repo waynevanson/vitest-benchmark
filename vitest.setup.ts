@@ -32,6 +32,7 @@ expect.extend({
       Array.from(module.children.allTests("failed"))
     )
 
+    // todo: sort failing tests from non-failing
     const errors = failedTests.reduce((accu, failedTest) => {
       accu[failedTest.fullName] =
         failedTest.result().errors?.map?.((error) => error.message) ?? []
@@ -45,8 +46,8 @@ expect.extend({
         message() {
           return `Expected to have more than 0 failed tests`
         },
-        expected: errors,
-        actual: {}
+        expected: {},
+        actual: errors
       }
     } else {
       return {

@@ -20,6 +20,6 @@ describe(fixture.sequencing, () => {
       reporters: ["../../silent-reporter"]
     })
 
-    expect(vitest).toHaveFailedTests()
+    expect(vitest).not.toHaveFailedTests()
   })
 })
