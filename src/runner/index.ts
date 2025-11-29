@@ -129,13 +129,13 @@ export default class VitestBenchRunner
     })
 
     async function cycle() {
-      const start = performance.now()
       const afterEachCycle = await beforeEachCycle()
+
+      const start = performance.now()
       await fn()
+      const end = performance.now()
 
       await afterEachCycle()
-
-      const end = performance.now()
 
       // reset `expect.assertions(n)` to `0` because it sums over each test call.
       test.context.expect.setState({ assertionCalls: 0 })
