@@ -25,7 +25,7 @@ describe("default local", ({}) => {
     } else {
       expect(beforeEachOnly).toHaveBeenCalledTimes(2)
       expect(beforeEachBoth).toHaveBeenCalledTimes(2)
-      expect(afterEachOnly).toHaveBeenCalledTimes(1)
+      expect(afterEachOnly).toHaveBeenCalledTimes(2)
       expect(afterEachBoth).toHaveBeenCalledTimes(1)
     }
   })
