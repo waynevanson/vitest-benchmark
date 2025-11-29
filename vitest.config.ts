@@ -17,7 +17,7 @@ export default defineConfig({
   test: {
     setupFiles: ["./vitest.setup.ts"],
     // exclude the fixtures in test files
-    exclude: [BENCHMARK ? "./test/" : "./test/*/**", "node_modules/"],
+    exclude: ["./test/*/**", "node_modules/"],
     runner,
     provide: {
       benchrunner
