@@ -4,7 +4,7 @@
   "author": {
     "name": "Wayne Van Son"
   },
-  "version": "0.3.0",
+  "version": "0.4.0",
   "files": [
     "dist"
   ],
@@ -30,16 +30,16 @@
   "type": "module",
   "exports": {
     "./reporter/bmf": {
-      "types": "./dist/public/reporter/bmf.d.ts",
-      "default": "./dist/public/reporter/bmf.js"
+      "types": "./dist/reporter/bmf.d.ts",
+      "default": "./dist/reporter/bmf.js"
     },
     "./reporter/silent": {
-      "types": "./dist/public/reporter/silent.d.ts",
-      "default": "./dist/public/reporter/silent.js"
+      "types": "./dist/reporter/silent.d.ts",
+      "default": "./dist/reporter/silent.js"
     },
     "./runner": {
-      "types": "./dist/public/runner.d.ts",
-      "default": "./dist/public/runner.js"
+      "types": "./dist/runner/index.d.ts",
+      "default": "./dist/runner/index.js"
     }
   },
   "scripts": {

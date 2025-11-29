@@ -5,15 +5,29 @@ import {
   TestRunEndReason,
   Vitest
 } from "vitest/node"
-import { Calculations } from "./calculate.js"
 import { writeFileSync } from "node:fs"
 
+export interface Measure {
+  value: number
+  minimum_value?: number
+  maximum_value?: number
+}
+
+export interface Measures {
+  [measure: string]: Measure
+}
+
+export interface BenchmarkMetricFormat {
+  [benchmark: string]: Measures
+}
+
+// todo: add to vitest config if possible
 export interface BMFReporterConfig {
   outputFile: undefined | string
 }
 
 // todo: allow template syntax for saving names
-export class BMFReporter implements Reporter {
+export default class BMFReporter implements Reporter {
   config: BMFReporterConfig = { outputFile: undefined }
   vitest: Vitest | undefined
 
@@ -33,7 +47,7 @@ export class BMFReporter implements Reporter {
   ) {
     if (reason !== "passed" || unhandledErrors.length > 0) return
 
-    const bmf: Record<string, Calculations> = {}
+    const bmf: BenchmarkMetricFormat = {}
 
     for (const testModule of testModules) {
       for (const testCase of testModule.children.allTests("passed")) {
@@ -70,5 +84,3 @@ export class BMFReporter implements Reporter {
     }
   }
 }
-
-export default BMFReporter

@@ -24,7 +24,7 @@ const schema = v.optional(config, v.getDefaults(config));
 // todo: remove assertions via vite plugin?
 // todo: allow configuring what measures to create
 // todo: add tracing
-export class VitestBenchRunner extends VitestTestRunner {
+export default class VitestBenchRunner extends VitestTestRunner {
     // Allowing Vitest to run the `each` hooks means we don't have access to the
     // cleanup function from `beforeEach`.
     // Instead we'll move them here before Vitest can read them,

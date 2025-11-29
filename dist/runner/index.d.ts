@@ -44,7 +44,7 @@ declare module "vitest" {
  * @summary
  * A `VitestRunner` that runs tests as benchmarks.
  */
-export declare class VitestBenchRunner extends VitestTestRunner implements VitestRunner {
+export default class VitestBenchRunner extends VitestTestRunner implements VitestRunner {
     #private;
     constructor(config: SerializedConfig);
     onBeforeRunSuite(suite: Suite): Promise<void>;

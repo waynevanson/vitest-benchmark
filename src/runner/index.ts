@@ -73,7 +73,7 @@ declare module "vitest" {
 // todo: remove assertions via vite plugin?
 // todo: allow configuring what measures to create
 // todo: add tracing
-export class VitestBenchRunner
+export default class VitestBenchRunner
   extends VitestTestRunner
   implements VitestRunner
 {

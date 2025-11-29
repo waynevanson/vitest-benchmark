@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 // todo: allow template syntax for saving names
-export class BMFReporter {
+export default class BMFReporter {
     config = { outputFile: undefined };
     vitest;
     onInit(vitest) {
@@ -42,4 +42,3 @@ export class BMFReporter {
         }
     }
 }
-export default BMFReporter;
