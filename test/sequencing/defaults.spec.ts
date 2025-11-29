@@ -30,6 +30,3 @@ describe("default local", () => {
     }
   })
 })
-
-// todo: make a separate task states fixture
-test.skip("Allow skipping a test")

@@ -59,6 +59,41 @@ expect.extend({
       }
     }
   },
+  toHaveSkippedTests(recieved) {
+    const vitest = recieved as Vitest
+    const modules = vitest.state.getTestModules()
+
+    const failedTests = modules.flatMap((module) =>
+      Array.from(module.children.allTests("skipped"))
+    )
+
+    // todo: sort failing tests from non-failing
+    const errors = failedTests.reduce((accu, failedTest) => {
+      accu[failedTest.fullName] =
+        failedTest.result().errors?.map?.((error) => error.message) ?? []
+
+      return accu
+    }, {} as Record<string, Array<string>>)
+
+    if (failedTests.length > 0) {
+      return {
+        pass: true,
+        message() {
+          return `Expected to have more than 0 skipped tests`
+        },
+        expected: {},
+        actual: errors
+      }
+    } else {
+      return {
+        message() {
+          return `Expected to have 0 skipped tests`
+        },
+        pass: false,
+        expected: errors
+      }
+    }
+  },
   toHaveNumberOfTests(recieved, count) {
     const vitest = recieved as Vitest
 
@@ -86,6 +121,7 @@ expect.extend({
 
 interface VitestCustomTestMatchers<T = unknown> {
   toHaveFailedTests(): T
+  toHaveSkippedTests(): T
   toHaveNumberOfTests(count: number): T
 }
 

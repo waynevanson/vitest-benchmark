@@ -12,7 +12,6 @@ const benchrunner = {
   }
 }
 
-// todo: move non-unit tests into integrated tests
 export default defineConfig({
   test: {
     setupFiles: ["./vitest.setup.ts"],

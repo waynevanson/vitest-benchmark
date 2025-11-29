@@ -9,7 +9,7 @@ describe("sequencing", () => {
       "defaults"
     )
 
-    expect(vitest).toHaveNumberOfTests(2)
+    expect(vitest).toHaveNumberOfTests(1)
     expect(vitest).not.toHaveFailedTests()
   })
 
