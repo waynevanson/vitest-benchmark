@@ -1,6 +1,4 @@
 import { defineConfig } from "vitest/config"
-import dts from "vite-plugin-dts"
-import { globSync as glob } from "glob"
 
 const BENCHMARK = process.env.BENCHMARK === "1"
 
@@ -16,10 +14,10 @@ export default defineConfig({
     provide: {
       benchrunner: {
         warmup: {
-          minMs: 1_000
+          minMs: 2_000
         },
         benchmark: {
-          minMs: 10_000
+          minMs: 60_000
         }
       }
     }
