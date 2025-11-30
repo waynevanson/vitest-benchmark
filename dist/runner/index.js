@@ -2,9 +2,9 @@ import * as v from "valibot";
 import { inject } from "vitest";
 import { VitestTestRunner } from "vitest/runners";
 import { getFn, getHooks, setHooks } from "vitest/suite";
-import { calculate } from "./calculate.js";
-import { createBeforeEachCycle } from "./hooks.js";
+import { deriveMeta, deriveResultsConfig } from "./calculate.js";
 import { schema } from "./config.js";
+import { createBeforeEachCycle } from "./hooks.js";
 /**
  * @summary
  * A `VitestRunner` that runs tests as benchmarks.
@@ -18,7 +18,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
     // Instead we'll move them here before Vitest can read them,
     // and call them per cycle.
     #hooks = new WeakMap();
-    #config = v.parse(schema, inject("benchrunner"));
+    #config;
     constructor(config) {
         if (config.sequence.concurrent) {
             throw new Error("Expected config.sequence.concurrent to be falsey");
@@ -27,6 +27,12 @@ export default class VitestBenchRunner extends VitestTestRunner {
             throw new Error("Expected config.sequence.shuffle to be falsey");
         }
         super(config);
+        const provided = v.parse(schema, inject("benchrunner"));
+        const results = deriveResultsConfig(provided.results);
+        this.#config = {
+            provided,
+            results
+        };
     }
     // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
     // This may cause some issues for some Vitest internals but we we can get to that later.
@@ -45,6 +51,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
     }
     async runTask(test) {
         const fn = getFn(test);
+        // todo: get hooks only once per test? I don't think it changes over each test
         const beforeEachCycle = createBeforeEachCycle(test, {
             sequence: this.config.sequence.hooks,
             getHooks: this.getHooks.bind(this)
@@ -64,8 +71,8 @@ export default class VitestBenchRunner extends VitestTestRunner {
         // warmup
         cycles = 0;
         duration = 0;
-        while (cycles < this.#config.warmup.minCycles ||
-            duration < this.#config.warmup.minMs) {
+        while (cycles < this.#config.provided.warmup.minCycles ||
+            duration < this.#config.provided.warmup.minMs) {
             duration += await cycle();
             cycles++;
         }
@@ -73,19 +80,16 @@ export default class VitestBenchRunner extends VitestTestRunner {
         cycles = 0;
         duration = 0;
         const samples = [];
-        while (cycles < this.#config.benchmark.minCycles ||
-            duration < this.#config.benchmark.minMs) {
+        while (cycles < this.#config.provided.benchmark.minCycles ||
+            duration < this.#config.provided.benchmark.minMs) {
             const sample = await cycle();
             duration += sample;
             samples.push(sample);
             cycles++;
         }
-        const calculations = calculate(samples, cycles);
+        const meta = deriveMeta(samples, cycles, this.#config.results);
         // A place where reporters can read stuff
-        test.meta.bench = {
-            expected: cycles,
-            calculations
-        };
+        test.meta.benchrunner = meta;
     }
     getHooks(suite) {
         const hooks = this.#hooks.get(suite);

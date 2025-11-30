@@ -17,7 +17,7 @@ export default class BMFReporter {
         for (const testModule of testModules) {
             for (const testCase of testModule.children.allTests("passed")) {
                 const meta = testCase.meta();
-                if (!meta.bench) {
+                if (!meta.benchrunner) {
                     throw new Error("Expected test to report a benchmark");
                 }
                 const name = [testModule.project.name, testCase.fullName]
@@ -30,7 +30,7 @@ export default class BMFReporter {
                         `If these tests are in two different projects, please add a project name in the vitest config to fix.`
                     ].join("\n"));
                 }
-                bmf[name] = meta.bench.calculations;
+                // bmf[name] = meta.benchrunner.
             }
         }
         const data = JSON.stringify(bmf);

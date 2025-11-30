@@ -1,8 +1,37 @@
-export interface Calculation {
-    minimum_value?: number;
-    maximum_value?: number;
-    value: number;
-}
-export interface Calculations extends Record<string, Calculation> {
-}
-export declare function calculate(samples: Array<number>, cycles: number): Calculations;
+import { BenchRunnerMeta, VitestBenchRunnerConfig } from "./config";
+type Optional<T> = {
+    enabled: false;
+} | {
+    enabled: true;
+    with: T;
+};
+export type ResultsConfig = {
+    samples: Optional<{
+        latency: {
+            measures: Optional<{
+                average: Optional<{
+                    throughput: {
+                        average: boolean;
+                    };
+                }>;
+                min: Optional<{
+                    throughput: {
+                        max: boolean;
+                    };
+                }>;
+                max: Optional<{
+                    throughput: {
+                        min: boolean;
+                    };
+                }>;
+            }>;
+            percentiles: Array<number>;
+        };
+        throughput: {
+            percentiles: Array<number>;
+        };
+    }>;
+};
+export declare function deriveResultsConfig(config: VitestBenchRunnerConfig["results"]): ResultsConfig;
+export declare function deriveMeta(samples: Array<number>, cycles: number, config: ResultsConfig): BenchRunnerMeta;
+export {};

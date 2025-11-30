@@ -4,13 +4,14 @@ import { inject, type SerializedConfig } from "vitest"
 import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
-import { calculate, Calculations } from "./calculate.js"
-import { createBeforeEachCycle } from "./hooks.js"
+import { deriveMeta, deriveResultsConfig, ResultsConfig } from "./calculate.js"
 import {
+  BenchRunnerMeta,
   schema,
   VitestBenchRunnerConfig,
   VitestBenchRunnerUserConfig
 } from "./config.js"
+import { createBeforeEachCycle } from "./hooks.js"
 
 declare module "vitest" {
   export interface ProvidedContext {
@@ -18,14 +19,9 @@ declare module "vitest" {
   }
 }
 
-interface BenchrunnerMeta {
-  expected: number
-  calculations: Calculations
-}
-
 declare module "@vitest/runner" {
   interface TaskMeta {
-    benchrunner?: BenchrunnerMeta
+    benchrunner?: BenchRunnerMeta
   }
 }
 
@@ -46,7 +42,7 @@ export default class VitestBenchRunner
   // and call them per cycle.
   #hooks = new WeakMap<Suite, Pick<SuiteHooks, "afterEach" | "beforeEach">>()
 
-  #config: VitestBenchRunnerConfig = v.parse(schema, inject("benchrunner"))
+  #config: { provided: VitestBenchRunnerConfig; results: ResultsConfig }
 
   constructor(config: SerializedConfig) {
     if (config.sequence.concurrent) {
@@ -58,6 +54,14 @@ export default class VitestBenchRunner
     }
 
     super(config)
+
+    const provided = v.parse(schema, inject("benchrunner"))
+    const results = deriveResultsConfig(provided.results)
+
+    this.#config = {
+      provided,
+      results
+    }
   }
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
@@ -82,6 +86,7 @@ export default class VitestBenchRunner
   async runTask(test: Test) {
     const fn = getFn(test)
 
+    // todo: get hooks only once per test? I don't think it changes over each test
     const beforeEachCycle = createBeforeEachCycle(test, {
       sequence: this.config.sequence.hooks,
       getHooks: this.getHooks.bind(this)
@@ -110,8 +115,8 @@ export default class VitestBenchRunner
     duration = 0
 
     while (
-      cycles < this.#config.warmup.minCycles ||
-      duration < this.#config.warmup.minMs
+      cycles < this.#config.provided.warmup.minCycles ||
+      duration < this.#config.provided.warmup.minMs
     ) {
       duration += await cycle()
       cycles++
@@ -123,8 +128,8 @@ export default class VitestBenchRunner
     const samples = []
 
     while (
-      cycles < this.#config.benchmark.minCycles ||
-      duration < this.#config.benchmark.minMs
+      cycles < this.#config.provided.benchmark.minCycles ||
+      duration < this.#config.provided.benchmark.minMs
     ) {
       const sample = await cycle()
       duration += sample
@@ -132,13 +137,10 @@ export default class VitestBenchRunner
       cycles++
     }
 
-    const calculations = calculate(samples, cycles)
+    const meta = deriveMeta(samples, cycles, this.#config.results)
 
     // A place where reporters can read stuff
-    test.meta.benchrunner = {
-      expected: cycles,
-      calculations
-    }
+    test.meta.benchrunner = meta
   }
 
   getHooks(suite: Suite) {

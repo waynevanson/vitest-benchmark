@@ -1,66 +1,190 @@
-export interface Calculation {
-  minimum_value?: number
-  maximum_value?: number
-  value: number
+import { BenchRunnerMeta, VitestBenchRunnerConfig } from "./config"
+
+type Optional<T> = { enabled: false } | { enabled: true; with: T }
+
+// this is purely for calculations, not what we return back
+export type ResultsConfig = {
+  samples: Optional<{
+    latency: {
+      measures: Optional<{
+        average: Optional<{
+          throughput: { average: boolean }
+        }>
+        min: Optional<{
+          throughput: { max: boolean }
+        }>
+        max: Optional<{
+          throughput: { min: boolean }
+        }>
+      }>
+      percentiles: Array<number>
+    }
+    throughput: { percentiles: Array<number> }
+  }>
 }
 
-export interface Calculations extends Record<string, Calculation> {}
+// almost calculating this in rverse lol
+export function deriveResultsConfig(
+  config: VitestBenchRunnerConfig["results"]
+): ResultsConfig {
+  return {
+    samples:
+      config.latency.average ||
+      config.latency.max ||
+      config.latency.min ||
+      config.latency.percentiles.length > 0 ||
+      config.throughput.average ||
+      config.throughput.max ||
+      config.throughput.min ||
+      config.throughput.percentiles.length > 0
+        ? {
+            enabled: true,
+            with: {
+              latency: {
+                measures:
+                  config.latency.average ||
+                  config.latency.max ||
+                  config.latency.min ||
+                  config.throughput.average ||
+                  config.throughput.max ||
+                  config.throughput.min
+                    ? {
+                        enabled: true,
+                        with: {
+                          average:
+                            config.latency.average || config.throughput.average
+                              ? {
+                                  enabled: true,
+                                  with: {
+                                    throughput: {
+                                      average: config.throughput.average
+                                    }
+                                  }
+                                }
+                              : { enabled: false },
+                          max:
+                            config.latency.max || config.throughput.min
+                              ? {
+                                  enabled: true,
+                                  with: {
+                                    throughput: { min: config.throughput.min }
+                                  }
+                                }
+                              : { enabled: false },
 
-export function calculate(
+                          min:
+                            config.latency.min || config.throughput.max
+                              ? {
+                                  enabled: true,
+                                  with: {
+                                    throughput: { max: config.throughput.max }
+                                  }
+                                }
+                              : { enabled: false }
+                        }
+                      }
+                    : { enabled: false },
+                percentiles: config.latency.percentiles
+              },
+              throughput: {
+                percentiles: config.throughput.percentiles
+              }
+            }
+          }
+        : { enabled: false }
+  }
+}
+
+export function deriveMeta(
   samples: Array<number>,
-  cycles: number
-): Calculations {
+  cycles: number,
+  config: ResultsConfig
+): BenchRunnerMeta {
+  if (!config.samples.enabled) {
+    return {}
+  }
   samples.sort()
 
-  const time = samples.reduce((accu, curr) => accu + curr, 0)
-
-  const latency = {
-    minimum_value: samples.reduce((accu, curr) => Math.min(accu, curr)),
-    maximum_value: samples.reduce((accu, curr) => Math.max(accu, curr)),
-    value: time / samples.length
-  }
-
-  const throughput = {
-    value: cycles / time,
-    minimum_value: cycles / (latency.maximum_value * samples.length),
-    maximum_value: cycles / (latency.minimum_value * samples.length)
-  }
-
-  // todo: percentiles of these two measures.
-  const percentiles = calculatePercentiles(
+  const results: BenchRunnerMeta = {
     samples,
-    [50, 70, 80, 90, 95, 98, 99]
-  )
+    // todo: only make when we need to
+    throughput: {}
+  }
 
-  return { latency, throughput, ...percentiles }
-}
+  if (
+    config.samples.with.latency.percentiles.length > 0 ||
+    config.samples.with.latency.measures.enabled
+  ) {
+    results.latency = {}
+  }
 
-function calculatePercentiles(
-  samples: Array<number>,
-  percentiles: Array<number>
-) {
-  const measures = {} as Calculations
+  if (config.samples.with.latency.measures.enabled) {
+    const time = samples.reduce((accu, curr) => accu + curr, 0)
+    if (config.samples.with.latency.measures.with.average.enabled) {
+      const latencyAverage = time / samples.length
 
-  for (const percentile of percentiles) {
-    const name = `P${percentile}`
-    measures[name] = {
-      value: calculatePercentile(samples, percentile)
+      results.latency!.average = latencyAverage
+
+      if (
+        config.samples.with.latency.measures.with.average.with.throughput
+          .average
+      ) {
+        const throughputAverage = cycles / latencyAverage
+        results.throughput!.average = throughputAverage
+      }
+    }
+
+    if (config.samples.with.latency.measures.with.max.enabled) {
+      const latencyMax = samples[samples.length] ?? 0
+      results.latency!.max = latencyMax
+
+      if (config.samples.with.latency.measures.with.max.with.throughput.min) {
+        const throughputMin = cycles / (latencyMax * samples.length)
+        results.throughput!.min = throughputMin
+      }
+    }
+
+    if (config.samples.with.latency.measures.with.min.enabled) {
+      const latencyMin = samples[0] ?? 0
+      results.latency!.max = latencyMin
+
+      if (config.samples.with.latency.measures.with.min.with.throughput.max) {
+        const throughputMax = cycles / (latencyMin * samples.length)
+        results.throughput!.max = throughputMax
+      }
     }
   }
 
-  return measures
+  if (config.samples.with.latency.percentiles.length > 0) {
+    const latencyPercentiles = config.samples.with.latency.percentiles.map(
+      (percentile) => calculatePercentile(samples, percentile)
+    )
+
+    // results.latency!.percentiles = latencyPercentiles
+  }
+
+  if (config.samples.with.throughput.percentiles.length > 0) {
+    const sampled = samples.map((a) => 1 / a).reverse()
+    const throughputPercentiles =
+      config.samples.with.throughput.percentiles.map((percentile) =>
+        calculatePercentile(sampled, percentile)
+      )
+
+    //  results.throughput?.percentiles= throughputPercentiles
+  }
+
+  return results
 }
 
+// for thoughput, we need to change each sample to be a percentage of the cycle or somthing 1/sample ?
 // Thanks GPT
 function calculatePercentile(
   samples: Array<number>,
   percentile: number
 ): number {
-  samples.sort()
-
   const m = samples.length - 1
 
-  const r = (percentile / 100) * m
+  const r = percentile * m
   const i = Math.floor(r)
   const f = r - i
 

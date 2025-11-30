@@ -71,7 +71,7 @@ export default class BMFReporter implements Reporter {
           )
         }
 
-        bmf[name] = meta.benchrunner.calculations
+        // bmf[name] = meta.benchrunner.
       }
     }
 

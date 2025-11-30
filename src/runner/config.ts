@@ -13,16 +13,14 @@ const warmup = v.object({
 const disabled = v.exactOptional(v.boolean(), false)
 
 const percentiles = v.pipe(
-  v.array(v.pipe(v.number(), v.gtValue(0))),
-  v.minLength(0)
+  v.array(v.pipe(v.number(), v.gtValue(0), v.ltValue(1)))
 )
 
 const measure = v.object({
   average: disabled,
   min: disabled,
   max: disabled,
-  // this could be 999999 or 0000001, round up the decimal places with log and percentage of that.
-  percentiles: v.exactOptional(percentiles, v.getDefaults(percentiles))
+  percentiles: v.exactOptional(percentiles, [] as Array<number>)
 })
 
 const measures = v.exactOptional(measure, v.getDefaults(measure))
@@ -35,44 +33,22 @@ const results = v.object({
 
 const config = v.object({
   benchmark: v.exactOptional(benchmark, v.getDefaults(benchmark)),
-  warmup: v.exactOptional(warmup, v.getDefaults(warmup))
-  //   results: v.exactOptional(results, v.getDefaults(results))
+  warmup: v.exactOptional(warmup, v.getDefaults(warmup)),
+  results: v.exactOptional(results, v.getDefaults(results))
 })
 
 export const schema = v.optional(config, v.getDefaults(config))
 
-export interface VitestBenchRunnerUserConfig {
-  benchmark?: {
-    /**
-     * @default 1
-     */
-    minCycles?: number
+export type VitestBenchRunnerUserConfig = v.InferInput<typeof schema>
 
-    /**
-     * @default 0
-     */
-    minMs?: number
-  }
-  warmup?: {
-    /**
-     * @default 0
-     */
-    minCycles?: number
+export type VitestBenchRunnerConfig = v.InferOutput<typeof schema>
 
-    /**
-     * @default 0
-     */
-    minMs?: number
-  }
-}
+export type BenchRunnerMeta = DeepPartialReplace<
+  Pick<VitestBenchRunnerConfig["results"], "latency" | "throughput">,
+  boolean,
+  number
+> & { samples?: Array<number> }
 
-export interface VitestBenchRunnerConfig {
-  benchmark: {
-    minCycles: number
-    minMs: number
-  }
-  warmup: {
-    minCycles: number
-    minMs: number
-  }
+type DeepPartialReplace<T, U, V> = {
+  [P in keyof T]?: T[P] extends U ? V : DeepPartialReplace<T[P], U, V>
 }
