@@ -53,7 +53,7 @@ export default class BMFReporter implements Reporter {
       for (const testCase of testModule.children.allTests("passed")) {
         const meta = testCase.meta()
 
-        if (!meta.bench) {
+        if (!meta.benchrunner) {
           throw new Error("Expected test to report a benchmark")
         }
 
@@ -71,7 +71,7 @@ export default class BMFReporter implements Reporter {
           )
         }
 
-        bmf[name] = meta.bench.calculations
+        bmf[name] = meta.benchrunner.calculations
       }
     }
 

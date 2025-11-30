@@ -6,63 +6,26 @@ import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
 import { calculate, Calculations } from "./calculate.js"
 import { createBeforeEachCycle } from "./hooks.js"
-
-const warmup = v.object({
-  minCycles: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0)),
-  minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
-})
-
-const benchmark = v.object({
-  minCycles: v.pipe(v.exactOptional(v.number(), 1), v.minValue(1)),
-  minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
-})
-
-const config = v.object({
-  benchmark: v.exactOptional(benchmark, v.getDefaults(benchmark)),
-  warmup: v.exactOptional(warmup, v.getDefaults(warmup))
-})
-
-const schema = v.optional(config, v.getDefaults(config))
-
-export interface VitestBenchRunnerUserConfig {
-  benchmark?: {
-    /**
-     * @default 1
-     */
-    minCycles?: number
-
-    /**
-     * @default 0
-     */
-    minMs?: number
-  }
-  warmup?: {
-    /**
-     * @default 1
-     */
-    minCycles?: number
-
-    /**
-     * @default 0
-     */
-    minMs?: number
-  }
-}
-
-export interface VitestBenchRunnerConfig {
-  benchmark: {
-    minCycles: number
-    minMs: number
-  }
-  warmup: {
-    minCycles: number
-    minMs: number
-  }
-}
+import {
+  schema,
+  VitestBenchRunnerConfig,
+  VitestBenchRunnerUserConfig
+} from "./config.js"
 
 declare module "vitest" {
   export interface ProvidedContext {
     benchrunner?: VitestBenchRunnerUserConfig
+  }
+}
+
+interface BenchrunnerMeta {
+  expected: number
+  calculations: Calculations
+}
+
+declare module "@vitest/runner" {
+  interface TaskMeta {
+    benchrunner?: BenchrunnerMeta
   }
 }
 
@@ -83,7 +46,7 @@ export default class VitestBenchRunner
   // and call them per cycle.
   #hooks = new WeakMap<Suite, Pick<SuiteHooks, "afterEach" | "beforeEach">>()
 
-  #config: VitestBenchRunnerConfig
+  #config: VitestBenchRunnerConfig = v.parse(schema, inject("benchrunner"))
 
   constructor(config: SerializedConfig) {
     if (config.sequence.concurrent) {
@@ -95,10 +58,6 @@ export default class VitestBenchRunner
     }
 
     super(config)
-
-    const options = inject("benchrunner")
-
-    this.#config = v.parse(schema, options)
   }
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
@@ -176,7 +135,7 @@ export default class VitestBenchRunner
     const calculations = calculate(samples, cycles)
 
     // A place where reporters can read stuff
-    test.meta.bench = {
+    test.meta.benchrunner = {
       expected: cycles,
       calculations
     }
@@ -190,14 +149,5 @@ export default class VitestBenchRunner
     }
 
     return hooks
-  }
-}
-
-declare module "@vitest/runner" {
-  interface TaskMeta {
-    bench?: {
-      expected: number
-      calculations: Calculations
-    }
   }
 }

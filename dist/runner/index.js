@@ -4,19 +4,7 @@ import { VitestTestRunner } from "vitest/runners";
 import { getFn, getHooks, setHooks } from "vitest/suite";
 import { calculate } from "./calculate.js";
 import { createBeforeEachCycle } from "./hooks.js";
-const warmup = v.object({
-    minCycles: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0)),
-    minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
-});
-const benchmark = v.object({
-    minCycles: v.pipe(v.exactOptional(v.number(), 1), v.minValue(1)),
-    minMs: v.pipe(v.exactOptional(v.number(), 0), v.minValue(0))
-});
-const config = v.object({
-    benchmark: v.exactOptional(benchmark, v.getDefaults(benchmark)),
-    warmup: v.exactOptional(warmup, v.getDefaults(warmup))
-});
-const schema = v.optional(config, v.getDefaults(config));
+import { schema } from "./config.js";
 /**
  * @summary
  * A `VitestRunner` that runs tests as benchmarks.
@@ -30,7 +18,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
     // Instead we'll move them here before Vitest can read them,
     // and call them per cycle.
     #hooks = new WeakMap();
-    #config;
+    #config = v.parse(schema, inject("benchrunner"));
     constructor(config) {
         if (config.sequence.concurrent) {
             throw new Error("Expected config.sequence.concurrent to be falsey");
@@ -39,8 +27,6 @@ export default class VitestBenchRunner extends VitestTestRunner {
             throw new Error("Expected config.sequence.shuffle to be falsey");
         }
         super(config);
-        const options = inject("benchrunner");
-        this.#config = v.parse(schema, options);
     }
     // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
     // This may cause some issues for some Vitest internals but we we can get to that later.
@@ -64,11 +50,11 @@ export default class VitestBenchRunner extends VitestTestRunner {
             getHooks: this.getHooks.bind(this)
         });
         async function cycle() {
-            const start = performance.now();
             const afterEachCycle = await beforeEachCycle();
+            const start = performance.now();
             await fn();
-            await afterEachCycle();
             const end = performance.now();
+            await afterEachCycle();
             // reset `expect.assertions(n)` to `0` because it sums over each test call.
             test.context.expect.setState({ assertionCalls: 0 });
             const delta = end - start;

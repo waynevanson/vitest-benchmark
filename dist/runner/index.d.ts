@@ -3,38 +3,7 @@ import { type SerializedConfig } from "vitest";
 import { VitestTestRunner } from "vitest/runners";
 import type { VitestRunner } from "vitest/suite";
 import { Calculations } from "./calculate.js";
-export interface VitestBenchRunnerUserConfig {
-    benchmark?: {
-        /**
-         * @default 1
-         */
-        minCycles?: number;
-        /**
-         * @default 0
-         */
-        minMs?: number;
-    };
-    warmup?: {
-        /**
-         * @default 1
-         */
-        minCycles?: number;
-        /**
-         * @default 0
-         */
-        minMs?: number;
-    };
-}
-export interface VitestBenchRunnerConfig {
-    benchmark: {
-        minCycles: number;
-        minMs: number;
-    };
-    warmup: {
-        minCycles: number;
-        minMs: number;
-    };
-}
+import { VitestBenchRunnerUserConfig } from "./config.js";
 declare module "vitest" {
     interface ProvidedContext {
         benchrunner?: VitestBenchRunnerUserConfig;

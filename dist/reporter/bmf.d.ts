@@ -1,8 +1,8 @@
 import { Reporter, SerializedError, TestModule, TestRunEndReason, Vitest } from "vitest/node";
 export interface Measure {
     value: number;
-    minimum_value?: number;
-    maximum_value?: number;
+    lower_value?: number;
+    upper_value?: number;
 }
 export interface Measures {
     [measure: string]: Measure;
