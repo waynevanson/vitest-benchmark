@@ -89,7 +89,7 @@ export function createCompile<Contexts extends ContextsKind>() {
           for (const name in schema.entries) {
             // schema
             const entry = schema.entries[name]
-            parent[name] = entry.type === CONDITIONAL ? entry.fn.id : entry.id
+            parent[name] = entry.id
 
             friends.add(entry.id)
 

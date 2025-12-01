@@ -9,13 +9,14 @@ export interface Conditional<
   Contexts extends ContextsKind,
   Condition extends boolean,
   Fn extends
-    | Created<Contexts, unknown>
-    | Derived<Contexts, unknown, DependenciesKind>
+    | CreatedKindWithContexts<Contexts>
+    | DerivedKindWithContexts<Contexts>
 > {
+  (...args: Parameters<Fn>): ReturnType<Fn>
   condition: Condition
   type: CONDITIONAL
-  fn: Fn
   id: symbol
+  fn: Fn
 }
 
 export type ConditionalFnKindWithContexts<Contexts extends ContextsKind> =
@@ -33,14 +34,19 @@ export function createConditional<Contexts extends ContextsKind>() {
   return function conditional<
     Condition extends boolean,
     Fn extends
-      | Created<Contexts, unknown>
-      | Derived<Contexts, unknown, ReadonlyArray<unknown>>
+      | CreatedKindWithContexts<Contexts>
+      | DerivedKindWithContexts<Contexts>
   >(condition: Condition, fn: Fn): Conditional<Contexts, Condition, Fn> {
-    return {
-      condition,
-      fn,
-      type: CONDITIONAL,
-      id: Symbol()
+    function conditional(...args: Parameters<Fn>): ReturnType<Fn> {
+      //@ts-expect-error
+      return fn(...args)
     }
+
+    conditional.type = CONDITIONAL
+    conditional.condition = condition
+    conditional.fn = fn
+    conditional.id = fn.id
+
+    return conditional
   }
 }
