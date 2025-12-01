@@ -60,7 +60,7 @@ export function createCompile<Contexts extends ContextsKind>() {
           break
 
         case DERIVED: {
-          fns.setOnce(schema.id, schema.fn)
+          fns.setOnce(schema.id, schema)
 
           const friends = dependsOn.ensure(schema.id)
 

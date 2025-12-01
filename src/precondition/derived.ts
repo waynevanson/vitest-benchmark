@@ -5,25 +5,35 @@ export const DERIVED = Symbol("DERIVED")
 export type DERIVED = typeof DERIVED
 
 export interface Derived<
-  Contexts extends ReadonlyArray<unknown>,
+  Contexts extends ContextsKind,
   Output,
-  Dependencies extends ReadonlyArray<unknown>
+  Dependencies extends DependenciesKind
 > {
-  fn(...args: [...dependencies: Dependencies, ...contexts: Contexts]): Output
-  deps: {
-    [P in keyof Dependencies]: Created<Contexts, Dependencies[P]>
-  }
+  (...args: DerivedFnArgs<Contexts, Dependencies>): Output
+  deps: DerivedDeps<Contexts, Dependencies>
   type: DERIVED
   id: symbol
 }
+
+export type DerivedDeps<
+  Contexts extends ContextsKind,
+  Dependencies extends DependenciesKind
+> = {
+  [P in keyof Dependencies]: Created<Contexts, Dependencies[P]>
+}
+
+export type DerivedFnArgs<
+  Contexts extends ContextsKind,
+  Dependencies extends DependenciesKind
+> = [...Dependencies: Dependencies, ...contexts: Contexts]
+
+export type DependenciesKind = ReadonlyArray<unknown>
 
 export type DerivedKindWithContexts<Contexts extends ContextsKind> = Derived<
   Contexts,
   unknown,
   DependenciesKind
 >
-
-export type DependenciesKind = ReadonlyArray<unknown>
 
 export type DerivedKind = DerivedKindWithContexts<ContextsKind>
 
@@ -35,24 +45,26 @@ export function createDerived<Contexts extends ContextsKind>() {
           | Created<Contexts, Dependencies[P]>
           | Derived<Contexts, Dependencies[P], any>
       },
-      fn: (
-        ...args: [...dependencies: Dependencies, ...contexts: Contexts]
-      ) => Output
+      fn: (...args: DerivedFnArgs<Contexts, Dependencies>) => Output
     ]
   ): Derived<Contexts, Output, Dependencies> {
-    const deps = args.slice(0, args.length - 1) as {
-      [P in keyof Dependencies]: Created<Contexts, Dependencies[P]>
-    }
+    const deps = args.slice(0, args.length - 1) as DerivedDeps<
+      Contexts,
+      Dependencies
+    >
 
     const fn = args[args.length - 1] as (
-      ...args: [...dependencies: Dependencies, ...contexts: Contexts]
+      ...args: DerivedFnArgs<Contexts, Dependencies>
     ) => Output
 
-    return {
-      deps,
-      fn,
-      type: DERIVED,
-      id: Symbol()
+    function derive(...args: DerivedFnArgs<Contexts, Dependencies>) {
+      return fn(...args)
     }
+
+    derive.type = DERIVED
+    derive.id = Symbol()
+    derive.deps = deps
+
+    return derive
   }
 }
