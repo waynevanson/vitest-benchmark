@@ -1,9 +1,23 @@
 import { DefaultMap, HashMap } from "../hashmap"
-import { CONDITIONAL, ConditionalKindWithContexts } from "./conditional"
-import { CREATED, CreatedKindWithContexts } from "./create"
-import { DERIVED, DerivedKindWithContexts } from "./derived"
-import { STRUCT, StructKindWithContexts } from "./struct"
-import { ContextsKind, SchemaKind } from "./types"
+import {
+  Conditional,
+  CONDITIONAL,
+  ConditionalKindWithContexts
+} from "./conditional"
+import {
+  Created,
+  CREATED,
+  CreatedKind,
+  CreatedKindWithContexts
+} from "./create"
+import {
+  Derived,
+  DERIVED,
+  DerivedKind,
+  DerivedKindWithContexts
+} from "./derived"
+import { Struct, STRUCT, StructKindWithContexts } from "./struct"
+import { ContextsKind, SchemaKindWithContexts } from "./types"
 
 export type Id = symbol
 export type Fn = (...args: any) => any
@@ -18,7 +32,9 @@ type Parent = ParentObject
 type Leaf = Parent | Id
 
 export function createCompile<Contexts extends ContextsKind>() {
-  return function compile<T extends SchemaKind>(schema: T) {
+  return function compile<T extends SchemaKindWithContexts<Contexts>>(
+    schema: T
+  ) {
     // empty set means top of the graph
     const dependsOn = new DefaultMap<symbol, Set<symbol>>(() => new Set())
     const fns = new HashMap<Id, Fn>()
@@ -64,7 +80,7 @@ export function createCompile<Contexts extends ContextsKind>() {
 
           const friends = dependsOn.ensure(schema.id)
 
-          for (const dep of schema.deps) {
+          for (const dep of schema.dependencies) {
             friends.add(dep.id)
             walk(dep, undefined)
           }
@@ -82,6 +98,8 @@ export function createCompile<Contexts extends ContextsKind>() {
           break
 
         case STRUCT: {
+          // todo: how about nested parent objects?
+          // we probably need to reference child objects
           const parent = {} as ParentObject
           objects.setOnce(schema.id, parent)
 
@@ -89,11 +107,14 @@ export function createCompile<Contexts extends ContextsKind>() {
           for (const name in schema.entries) {
             // schema
             const entry = schema.entries[name]
-            parent[name] = entry.id
 
-            friends.add(entry.id)
+            if (entry.type !== CONDITIONAL || entry.condition) {
+              parent[name] = entry.id
 
-            walk(entry, parent)
+              friends.add(entry.id)
+
+              walk(entry, parent)
+            }
           }
 
           break
@@ -106,7 +127,7 @@ export function createCompile<Contexts extends ContextsKind>() {
     // first we need to traverse the whole schema and save stuff
     walk(schema, undefined)
 
-    return function compiled(...contexts: Contexts) {
+    return function compiled(...contexts: Contexts): InferOutput<T> {
       // todo: what about derivations that implement structures?
       // we need to resolve an object
       const results = new Map<Id, unknown>()
@@ -115,7 +136,6 @@ export function createCompile<Contexts extends ContextsKind>() {
         if (!results.has(id)) {
           const dependencies = applyDependencies(id)
           const inputs = [...dependencies, ...contexts]
-          // console.log(inputs)
           const fn = fns.get(id)!
           results.set(id, fn(...inputs))
         }
@@ -123,7 +143,7 @@ export function createCompile<Contexts extends ContextsKind>() {
         return results.get(id)!
       }
 
-      function applyDependencies(id: Id): ReadonlyArray<unknown> {
+      function applyDependencies(id: Id): Array<unknown> {
         const result = []
 
         for (const dep of dependsOn.get(id) ?? new Set()) {
@@ -143,18 +163,16 @@ export function createCompile<Contexts extends ContextsKind>() {
       switch (schema.type) {
         case CONDITIONAL: {
           if (!schema.condition) {
-            return
+            return undefined as never
           }
-
-          return results.get(schema.fn.id)
         }
 
         case CREATED:
         case DERIVED:
-          return results.get(schema.id)!
+          return results.get(schema.id) as never
 
         case STRUCT:
-          return resolve(objects.get(schema.id)!, results)
+          return resolve(objects.get(schema.id)!, results) as never
 
         default:
           throw new Error("We are not good boys")
@@ -162,3 +180,33 @@ export function createCompile<Contexts extends ContextsKind>() {
     }
   }
 }
+
+// how to partition required and non-required keys?
+export type InferOutput<T> = T extends Created<any, infer Output>
+  ? Output
+  : T extends Derived<any, infer Output, any>
+  ? Output
+  : T extends Conditional<any, infer Condition, infer Fn>
+  ? boolean extends Condition
+    ? undefined | InferOutput<Fn>
+    : true extends Condition
+    ? InferOutput<Fn>
+    : undefined
+  : T extends Struct<any, infer U>
+  ? // ignore when false
+    {
+      [P in keyof U as U[P] extends
+        | CreatedKind
+        | DerivedKind
+        | Struct<any, Record<string, never>>
+        | Conditional<any, true, any>
+        ? P
+        : never]: InferOutput<U[P]>
+    } & {
+      [P in keyof U as U[P] extends Conditional<any, infer Condition, any>
+        ? boolean extends Condition
+          ? P
+          : never
+        : never]?: InferOutput<U[P]>
+    }
+  : never

@@ -19,6 +19,21 @@ describe("precondition", () => {
   })
 
   describe("derive", () => {
+    test("dependency only", () => {
+      const time = options.create((inputs) =>
+        inputs.samples.reduce((accu, curr) => accu + curr, 0)
+      )
+
+      const latency = options.derive(time, (time) => time * 2)
+
+      type aaaa = typeof latency
+
+      // todo: moving the derive depenendencies to the top is causing some sort of type mismatch.
+      const compiled = options.compile(latency)
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+      expect(result).toBe(54)
+    })
+
     test("dependencies only", () => {
       const samples = options.create((inputs) => inputs.samples)
 
@@ -56,7 +71,7 @@ describe("precondition", () => {
   describe("conditional", () => {
     test("true", () => {
       const samples = options.create((inputs) => inputs.samples)
-      const sampled = options.conditional(true, samples)
+      const sampled = options.conditional(true as const, samples)
 
       const compiled = options.compile(sampled)
       const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
@@ -65,11 +80,20 @@ describe("precondition", () => {
 
     test("false", () => {
       const samples = options.create((inputs) => inputs.samples)
-      const sampled = options.conditional(false, samples)
+      const sampled = options.conditional(false as const, samples)
 
       const compiled = options.compile(sampled)
       const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
       expect(result).toBeUndefined()
+    })
+
+    test("boolean", () => {
+      const samples = options.create((inputs) => inputs.samples)
+      const sampled = options.conditional(true as boolean, samples)
+
+      const compiled = options.compile(sampled)
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+      expect(result).toStrictEqual([1, 3, 5, 7, 11])
     })
 
     test("true but composed", () => {
@@ -93,6 +117,66 @@ describe("precondition", () => {
   })
 
   describe("struct", () => {
+    test.only("one field conditional true", () => {
+      const samples = options.create((inputs) => inputs.samples)
+      const sampled = options.conditional(true, samples)
+      const struct = options.struct({
+        sampled
+      })
+
+      const compiled = options.compile(struct)
+
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+
+      expect(result).toStrictEqual({
+        sampled: [1, 3, 5, 7, 11]
+      })
+    })
+
+    test.only("one field conditional false", () => {
+      const samples = options.create((inputs) => inputs.samples)
+      const sampled = options.conditional(false, samples)
+      const struct = options.struct({
+        sampled
+      })
+
+      const compiled = options.compile(struct)
+
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+
+      expect(result).toStrictEqual({})
+    })
+
+    test.only("one field conditional false boolean", () => {
+      const samples = options.create((inputs) => inputs.samples)
+      const sampled = options.conditional(false as boolean, samples)
+      const struct = options.struct({
+        sampled
+      })
+
+      const compiled = options.compile(struct)
+
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+
+      expect(result).toStrictEqual({})
+    })
+
+    test.only("one field conditional true boolean", () => {
+      const samples = options.create((inputs) => inputs.samples)
+      const sampled = options.conditional(true as boolean, samples)
+      const struct = options.struct({
+        sampled
+      })
+
+      const compiled = options.compile(struct)
+
+      const result = compiled({ samples: [1, 3, 5, 7, 11], cycles: 20 })
+
+      expect(result).toStrictEqual({
+        sampled: [1, 3, 5, 7, 11]
+      })
+    })
+
     test("one field", () => {
       const config = {
         samples: true,

@@ -4,7 +4,7 @@ import { createCreate } from "./create"
 import { createDerived } from "./derived"
 import { createStruct } from "./struct"
 
-export function createOptions<Contexts extends ReadonlyArray<unknown>>() {
+export function createOptions<Contexts extends Array<unknown>>() {
   return {
     create: createCreate<Contexts>(),
     derive: createDerived<Contexts>(),

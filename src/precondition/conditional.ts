@@ -1,5 +1,5 @@
-import { CreatedKindWithContexts, Created } from "./create"
-import { DerivedKindWithContexts, Derived, DependenciesKind } from "./derived"
+import { CreatedKindWithContexts } from "./create"
+import { DerivedKindWithContexts } from "./derived"
 import { ContextsKind } from "./types"
 
 export const CONDITIONAL = Symbol("CONDITIONAL")
@@ -38,7 +38,6 @@ export function createConditional<Contexts extends ContextsKind>() {
       | DerivedKindWithContexts<Contexts>
   >(condition: Condition, fn: Fn): Conditional<Contexts, Condition, Fn> {
     function conditional(...args: Parameters<Fn>): ReturnType<Fn> {
-      //@ts-expect-error
       return fn(...args)
     }
 

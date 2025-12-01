@@ -15,4 +15,4 @@ export type SchemaKindWithContexts<Contexts extends ContextsKind> =
   | ConditionalKindWithContexts<Contexts>
   | StructKindWithContexts<Contexts>
 
-export type ContextsKind = ReadonlyArray<unknown>
+export type ContextsKind = Array<unknown>
