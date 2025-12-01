@@ -1,6 +1,6 @@
 import { DefaultMap, HashMap } from "../hashmap"
 import { ConditionalKindWithContexts } from "./conditional"
-import { CreatedKindWithContexts } from "./create"
+import { CREATED, CreatedKindWithContexts } from "./create"
 import { DerivedKindWithContexts } from "./derived"
 import { StructKindWithContexts } from "./struct"
 import { ContextsKind, SchemaKind } from "./types"
@@ -55,7 +55,7 @@ export function createCompile<Contexts extends ContextsKind>() {
     >(schema: T, parent: Array<unknown> | Record<string, unknown> | undefined) {
       switch (schema.type) {
         // just apply it
-        case "CREATED":
+        case CREATED:
           fns.setOnce(schema.id, schema)
           break
 
@@ -149,7 +149,7 @@ export function createCompile<Contexts extends ContextsKind>() {
           return results.get(schema.fn.id)
         }
 
-        case "CREATED":
+        case CREATED:
         case "DERIVED":
           return results.get(schema.id)!
 
