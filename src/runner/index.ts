@@ -4,7 +4,7 @@ import { inject, type SerializedConfig } from "vitest"
 import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
-import { deriveMeta, deriveResultsConfig, ResultsConfig } from "./calculate.js"
+import { createCalculator } from "./calculate.js"
 import {
   BenchRunnerMeta,
   schema,
@@ -42,7 +42,13 @@ export default class VitestBenchRunner
   // and call them per cycle.
   #hooks = new WeakMap<Suite, Pick<SuiteHooks, "afterEach" | "beforeEach">>()
 
-  #config: { provided: VitestBenchRunnerConfig; results: ResultsConfig }
+  #config: {
+    provided: VitestBenchRunnerConfig
+    calculate: (context: {
+      samples: Array<number>
+      cycles: number
+    }) => BenchRunnerMeta
+  }
 
   constructor(config: SerializedConfig) {
     if (config.sequence.concurrent) {
@@ -56,11 +62,10 @@ export default class VitestBenchRunner
     super(config)
 
     const provided = v.parse(schema, inject("benchrunner"))
-    const results = deriveResultsConfig(provided.results)
 
     this.#config = {
       provided,
-      results
+      calculate: createCalculator(provided.results)
     }
   }
 
@@ -137,7 +142,7 @@ export default class VitestBenchRunner
       cycles++
     }
 
-    const meta = deriveMeta(samples, cycles, this.#config.results)
+    const meta = this.#config.calculate({ samples, cycles })
 
     // A place where reporters can read stuff
     test.meta.benchrunner = meta

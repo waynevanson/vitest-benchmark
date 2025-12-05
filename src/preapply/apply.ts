@@ -1,12 +1,12 @@
-import { InferOutput, Schema } from "./types"
+import { InferContext, InferOutput, Schema } from "./types"
 
-export function apply<TContext, TSchema extends Schema<TContext>>(
+export function apply<TSchema extends Schema<unknown>>(
   schema: TSchema,
-  context: TContext
+  context: InferContext<TSchema>
 ): InferOutput<TSchema> {
-  const cache = new Map<Schema<TContext>, any>()
+  const cache = new Map<Schema<InferContext<TSchema>>, any>()
 
-  function hit(schema: Schema<TContext>, onMiss: () => any): any {
+  function hit(schema: Schema<InferContext<TSchema>>, onMiss: () => any): any {
     if (!cache.has(schema)) {
       cache.set(schema, onMiss())
     }
@@ -16,7 +16,7 @@ export function apply<TContext, TSchema extends Schema<TContext>>(
 
   let rootReferenced = false
 
-  function walk(schema: Schema<TContext>): any {
+  function walk(schema: Schema<InferContext<TSchema>>): any {
     switch (schema.type) {
       case "Get": {
         rootReferenced = true
@@ -97,11 +97,10 @@ export function apply<TContext, TSchema extends Schema<TContext>>(
   return root as any
 }
 
-export function createApply<
-  TContext extends any,
-  TSchema extends Schema<TContext>
->(schema: TSchema) {
-  return function preapply(context: TContext): InferOutput<TSchema> {
+export function createApply<TSchema extends Schema<unknown>>(schema: TSchema) {
+  return function preapply(
+    context: InferContext<TSchema>
+  ): InferOutput<TSchema> {
     return apply(schema, context)
   }
 }
