@@ -9,7 +9,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     // exclude the fixtures in test files
     exclude: ["./test/*/**", "node_modules/"],
-    reporters: ["default", "./dist/reporter/bmf.js"],
+    reporters: ["default"],
     runner,
     provide: {
       benchrunner: {
