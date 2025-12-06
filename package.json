@@ -47,7 +47,8 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "test": "vitest run",
-    "benchmark": "BENCHMARK=1 vitest run"
+    "benchmark": "BENCHMARK=1 vitest run",
+    "prepublishOnly": "pnpm run build"
   },
   "packageManager": "pnpm@10.22.0",
   "dependencies": {

@@ -25,12 +25,6 @@ export default defineConfig({
             max: true,
             min: true,
             percentiles: [0.999, 0.99, 0.9, 0.75, 0.5, 0.01]
-          },
-          throughput: {
-            average: true,
-            max: true,
-            min: true,
-            percentiles: [0.999, 0.99, 0.9, 0.75, 0.5, 0.1, 0.01]
           }
         }
       }

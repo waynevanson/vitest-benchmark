@@ -3,36 +3,39 @@ import { VitestBenchRunnerConfig, BenchRunnerMeta } from "./config.js"
 
 export function calculate(
   config: VitestBenchRunnerConfig["results"],
-  context: { samples: Array<number>; cycles: number }
+  context: { durations: Array<number>; cycles: number }
 ): BenchRunnerMeta | undefined {
-  const cycles = lazy(() => context.samples.map((duration) => 1 / duration))
+  // side effect here will be okay.
+  const sorted = lazy(() => context.durations.sort())
+
+  const rates = lazy(() => sorted().map((duration) => 1 / duration))
 
   const totalDuration = lazy(() =>
-    context.samples.reduce((accu, curr) => accu + curr, 0)
+    context.durations.reduce((accu, curr) => accu + curr, 0)
   )
 
-  const latencyAverage = lazy(() => totalDuration() / context.samples.length)
+  const latencyAverage = lazy(() => totalDuration() / context.durations.length)
 
   const latencyMin = lazy(() =>
-    context.samples.reduce((accu, curr) => Math.min(accu, curr))
+    context.durations.reduce((accu, curr) => Math.min(accu, curr))
   )
 
   const latencyMax = lazy(() =>
-    context.samples.reduce((accu, curr) => Math.max(accu, curr))
+    context.durations.reduce((accu, curr) => Math.max(accu, curr))
   )
 
   const throughputAverage = lazy(() => context.cycles / totalDuration())
 
   const throughputMin = lazy(
-    () => context.cycles / (context.samples.length * latencyMax())
+    () => context.cycles / (context.durations.length * latencyMax())
   )
 
   const throughputMax = lazy(
-    () => context.cycles / (context.samples.length * latencyMin())
+    () => context.cycles / (context.durations.length * latencyMin())
   )
 
   const latencyPercentiles = lazy(() =>
-    calcPer(context.samples, config.latency.percentiles)
+    calculatePercentiles(sorted(), config.latency.percentiles)
   )
 
   const latency = collapse({
@@ -46,7 +49,7 @@ export function calculate(
   })
 
   const throughputPercentiles = lazy(() =>
-    calcPer(cycles(), config.throughput.percentiles)
+    calculatePercentiles(rates(), config.throughput.percentiles)
   )
 
   const throughput = collapse({
@@ -60,7 +63,7 @@ export function calculate(
   })
 
   const schema = collapse({
-    samples: conditional(config.samples, () => context.samples),
+    samples: conditional(config.samples, () => context.durations),
     latency,
     throughput
   })
@@ -86,8 +89,12 @@ export function calculatePercentile(
   }
 }
 
-function calcPer(samples: Array<number>, percentiles: Array<number>) {
+export function calculatePercentiles(
+  samples: Array<number>,
+  percentiles: Array<number>
+) {
   return percentiles.reduce((accu, percentile) => {
+    // 1, 01, 001, 90, 99, 999
     let name = percentile.toPrecision()
     if (name.length === 3) {
       name = percentile.toPrecision(2)

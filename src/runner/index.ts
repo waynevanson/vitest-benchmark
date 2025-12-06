@@ -123,7 +123,7 @@ export default class VitestBenchRunner
     // benchmark
     cycles = 0
     duration = 0
-    const samples = []
+    const durations = []
 
     while (
       cycles < this.#config.provided.benchmark.minCycles ||
@@ -131,11 +131,11 @@ export default class VitestBenchRunner
     ) {
       const sample = await cycle()
       duration += sample
-      samples.push(sample)
+      durations.push(sample)
       cycles++
     }
 
-    const meta = calculate(this.#config.provided.results, { samples, cycles })
+    const meta = calculate(this.#config.provided.results, { durations, cycles })
 
     // A place where reporters can read stuff
     test.meta.benchrunner = meta

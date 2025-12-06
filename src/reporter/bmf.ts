@@ -7,6 +7,7 @@ import {
   Vitest
 } from "vitest/node"
 import { writeFileSync } from "node:fs"
+import { collapse } from "../utils.js"
 
 export interface Measure {
   value: number
@@ -23,6 +24,7 @@ export interface BenchmarkMetricFormat {
 }
 
 // todo: add to vitest config if possible
+// todo: add pretty json output
 export interface BMFReporterConfig {
   outputFile: undefined | string
 }
@@ -66,7 +68,9 @@ export default class BMFReporter implements Reporter {
 
         const measures = createBenchmarkMeasures(testCase)
 
-        bmf[name] = measures
+        if (measures) {
+          bmf[name] = measures
+        }
       }
     }
 
@@ -86,7 +90,9 @@ function createBenchmarkName(testCase: TestCase): string {
   return [testCase.task.fullName].filter(Boolean).join(" # ")
 }
 
-export function createBenchmarkMeasures(testCase: TestCase) {
+export function createBenchmarkMeasures(
+  testCase: TestCase
+): Measures | undefined {
   const meta = testCase.meta()
 
   if (!meta.benchrunner) {
@@ -94,18 +100,6 @@ export function createBenchmarkMeasures(testCase: TestCase) {
   }
 
   const results = meta.benchrunner
-
-  const latency = createMeasure({
-    value: results?.latency?.average,
-    lower_value: results?.latency?.min,
-    upper_value: results?.latency?.max
-  })
-
-  const throughput = createMeasure({
-    value: results?.throughput?.average,
-    lower_value: results?.throughput?.min,
-    upper_value: results?.throughput?.max
-  })
 
   const latencyPercentiles = createPercentiles(
     "Latency",
@@ -117,42 +111,27 @@ export function createBenchmarkMeasures(testCase: TestCase) {
     results?.throughput?.percentiles
   )
 
-  const measurables = {
+  // todo: allow renaming
+  const measures = collapse({
+    "Latency Average": createMeasure(results?.latency?.average),
+    "Throughput Average": createMeasure(results?.throughput?.average),
+    "Latency Minimum": createMeasure(results?.latency?.min),
+    "Latency Maximum": createMeasure(results?.latency?.max),
+    "Throughput Minimum": createMeasure(results?.throughput?.min),
+    "Throughput Maximum": createMeasure(results?.throughput?.max),
     ...latencyPercentiles,
     ...throughputPercentiles
-  } as Measures
+  }) as Measures
 
-  if (latency) {
-    measurables.Latency = latency
-  }
-
-  if (throughput) {
-    measurables.Throughput = throughput
-  }
-
-  return measurables
+  return measures
 }
 
-function createMeasure(partial: Partial<Measure>) {
-  const measure = {} as Measure
-
-  if (partial.value === undefined) {
+export function createMeasure(value: number | undefined): Measure | undefined {
+  if (value === undefined) {
     return undefined
+  } else {
+    return { value }
   }
-
-  measure.value = partial.value
-
-  for (const property of ["lower_value", "upper_value"] as const) {
-    const value = partial[property]
-
-    if (value === undefined) {
-      continue
-    }
-
-    measure[property] = partial[property]
-  }
-
-  return measure
 }
 
 export function createPercentiles(
