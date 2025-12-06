@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { collapse } from "../utils.js";
 // todo: allow template syntax for saving names
 export default class BMFReporter {
     config = { outputFile: undefined };
@@ -25,7 +26,9 @@ export default class BMFReporter {
                     ].join("\n"));
                 }
                 const measures = createBenchmarkMeasures(testCase);
-                bmf[name] = measures;
+                if (measures) {
+                    bmf[name] = measures;
+                }
             }
         }
         const data = JSON.stringify(bmf);
@@ -38,6 +41,7 @@ export default class BMFReporter {
     }
 }
 function createBenchmarkName(testCase) {
+    console.log(testCase);
     // todo: add project name
     //@ts-expect-error`
     return [testCase.task.fullName].filter(Boolean).join(" # ");
@@ -48,44 +52,28 @@ export function createBenchmarkMeasures(testCase) {
         throw new Error("Expected test to report a benchmark");
     }
     const results = meta.benchrunner;
-    const latency = createMeasure({
-        value: results?.latency?.average,
-        lower_value: results?.latency?.min,
-        upper_value: results?.latency?.max
-    });
-    const throughput = createMeasure({
-        value: results?.throughput?.average,
-        lower_value: results?.throughput?.min,
-        upper_value: results?.throughput?.max
-    });
     const latencyPercentiles = createPercentiles("Latency", results.latency?.percentiles);
     const throughputPercentiles = createPercentiles("Throughput", results?.throughput?.percentiles);
-    const measurables = {
+    // todo: allow renaming
+    const measures = collapse({
+        "Latency Average": createMeasure(results?.latency?.average),
+        "Throughput Average": createMeasure(results?.throughput?.average),
+        "Latency Minimum": createMeasure(results?.latency?.min),
+        "Latency Maximum": createMeasure(results?.latency?.max),
+        "Throughput Minimum": createMeasure(results?.throughput?.min),
+        "Throughput Maximum": createMeasure(results?.throughput?.max),
         ...latencyPercentiles,
         ...throughputPercentiles
-    };
-    if (latency) {
-        measurables.Latency = latency;
-    }
-    if (throughput) {
-        measurables.Throughput = throughput;
-    }
-    return measurables;
+    });
+    return measures;
 }
-function createMeasure(partial) {
-    const measure = {};
-    if (partial.value === undefined) {
+export function createMeasure(value) {
+    if (value === undefined) {
         return undefined;
     }
-    measure.value = partial.value;
-    for (const property of ["lower_value", "upper_value"]) {
-        const value = partial[property];
-        if (value === undefined) {
-            continue;
-        }
-        measure[property] = partial[property];
+    else {
+        return { value };
     }
-    return measure;
 }
 export function createPercentiles(category, percentiles = {}) {
     if (Object.keys(percentiles).length === 0) {

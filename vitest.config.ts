@@ -1,8 +1,27 @@
 import { defineConfig } from "vitest/config"
 
 const BENCHMARK = process.env.BENCHMARK === "1"
+const CI = process.env.CI
 
 const runner = BENCHMARK ? "./src/runner/index.ts" : undefined
+
+const benchrunner = CI
+  ? {
+      warmup: {
+        minMs: 2_000
+      },
+      benchmark: {
+        minMs: 60_000
+      }
+    }
+  : {
+      warmup: {
+        minMs: 50
+      },
+      benchmark: {
+        minMs: 3_000
+      }
+    }
 
 export default defineConfig({
   test: {
@@ -13,12 +32,7 @@ export default defineConfig({
     runner,
     provide: {
       benchrunner: {
-        warmup: {
-          minMs: 2_000
-        },
-        benchmark: {
-          minMs: 60_000
-        },
+        ...benchrunner,
         results: {
           latency: {
             average: true,

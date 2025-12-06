@@ -85,6 +85,7 @@ export default class BMFReporter implements Reporter {
 }
 
 function createBenchmarkName(testCase: TestCase): string {
+  console.log(testCase)
   // todo: add project name
   //@ts-expect-error`
   return [testCase.task.fullName].filter(Boolean).join(" # ")

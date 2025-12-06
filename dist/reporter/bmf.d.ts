@@ -19,5 +19,6 @@ export default class BMFReporter implements Reporter {
     onInit(vitest: Vitest): void;
     onTestRunEnd(testModules: ReadonlyArray<TestModule>, unhandledErrors: ReadonlyArray<SerializedError>, reason: TestRunEndReason): void;
 }
-export declare function createBenchmarkMeasures(testCase: TestCase): Measures;
+export declare function createBenchmarkMeasures(testCase: TestCase): Measures | undefined;
+export declare function createMeasure(value: number | undefined): Measure | undefined;
 export declare function createPercentiles(category: string, percentiles?: Record<string, number>): Record<string, Measure> | undefined;
