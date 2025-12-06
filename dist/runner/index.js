@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { inject } from "vitest";
 import { VitestTestRunner } from "vitest/runners";
 import { getFn, getHooks, setHooks } from "vitest/suite";
-import { createCalculator } from "./calculate.js";
+import { calculate } from "./calculate.js";
 import { schema } from "./config.js";
 import { createBeforeEachCycle } from "./hooks.js";
 /**
@@ -28,10 +28,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
         }
         super(config);
         const provided = v.parse(schema, inject("benchrunner"));
-        this.#config = {
-            provided,
-            calculate: createCalculator(provided.results)
-        };
+        this.#config = { provided };
     }
     // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
     // This may cause some issues for some Vitest internals but we we can get to that later.
@@ -86,7 +83,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
             samples.push(sample);
             cycles++;
         }
-        const meta = this.#config.calculate({ samples, cycles });
+        const meta = calculate(this.#config.provided.results, { samples, cycles });
         // A place where reporters can read stuff
         test.meta.benchrunner = meta;
     }

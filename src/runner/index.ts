@@ -4,7 +4,7 @@ import { inject, type SerializedConfig } from "vitest"
 import { VitestTestRunner } from "vitest/runners"
 import type { VitestRunner } from "vitest/suite"
 import { getFn, getHooks, setHooks } from "vitest/suite"
-import { createCalculator } from "./calculate.js"
+import { calculate } from "./calculate.js"
 import {
   BenchRunnerMeta,
   schema,
@@ -44,10 +44,6 @@ export default class VitestBenchRunner
 
   #config: {
     provided: VitestBenchRunnerConfig
-    calculate: (context: {
-      samples: Array<number>
-      cycles: number
-    }) => BenchRunnerMeta
   }
 
   constructor(config: SerializedConfig) {
@@ -63,10 +59,7 @@ export default class VitestBenchRunner
 
     const provided = v.parse(schema, inject("benchrunner"))
 
-    this.#config = {
-      provided,
-      calculate: createCalculator(provided.results)
-    }
+    this.#config = { provided }
   }
 
   // Move `{before,after}Each` hooks into runner so Vitest can't run them automatically.
@@ -142,7 +135,7 @@ export default class VitestBenchRunner
       cycles++
     }
 
-    const meta = this.#config.calculate({ samples, cycles })
+    const meta = calculate(this.#config.provided.results, { samples, cycles })
 
     // A place where reporters can read stuff
     test.meta.benchrunner = meta
