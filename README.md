@@ -17,20 +17,28 @@ Development is being tested against [AriaKit](https://github.com/ariakit/ariakit
 1. Keeps assertions in place.
 2. Likely not endorsed by Vitest team.
 
-## Usage
-
-1. Install from registry
+## Installation
 
 ```sh
 # Use relevant commands to your package manager.
 npm install @waynevanson/vitest-benchmark
 ```
 
-2. Configure runner for use in Vitest.
+There are 2 exports worth configuring:
+
+1. `@waynevanson/vitest-benchmark/runner`
+1. `@waynevanson/vitest-benchmark/reporter/bmf`
+
+## `@waynevanson/vitest-benchmark/runner`
+
+Configure runner for use in Vitest.
+
+> NOTE: Without a reporter, results for benchmarks will not be shown.
+> A Reporter needs to be configured that consumes these results.
 
 ```ts
 # Config file
-# ie. vitest.config.ts
+# ie. vitest.config.ts or vite.config.ts
 
 import { defineConfig } from 'vitest/config'
 
@@ -38,9 +46,6 @@ export default defineConfig({
   test: {
     // required. You'll likely want to control this with an environment variable
     runner: "@waynevanson/vitest-benchmark/runner"
-
-    // optionally, add the extra reporter
-    reporters: ["default", "@waynevanson/vitest-benchmark/reporter/bmf"],
     provide: {
       // Configuration defaults, recommendations in comments.
       benchrunner: {
@@ -53,6 +58,26 @@ export default defineConfig({
           // ~50
           minCycles: 0,
           minMs: 0
+        },
+        // Defaults to undefined and calculates no benchmarks.
+        // These are attached to each task as metadata with `task.meta.benchrunner.*`
+        results: {
+          // takes up a lot of memory, not recommended.
+          samples: false,
+          latency: {
+            average: false,
+            min: false,
+            max: false,
+            // [0.999] for 99.9th percentile.
+            percentiles: []
+          },
+          throughput: {
+            average: false,
+            min: false,
+            max: false,
+            // [0.999] for 99.9th percentile.
+            percentiles: []
+          }
         }
       }
     }
@@ -60,30 +85,23 @@ export default defineConfig({
 })
 ```
 
-3. Run tests.
+## `@waynevanson/vitest-benchmark/reporter/bmf`
 
+Allows integration with [`Bencher`](https://bencher.dev/) for CI integration.
+
+1. Run via Vitest CLI.
+
+```sh
+vitest --reporter="@waynevanson/reporter/bmf"
 ```
-npm exec vitest
-```
 
-All your tests should pass. If not, feel free to raise an issue.
+This will output to minified JSON via stdout.
 
-4. Assuming you've configured for it, see the output file via the reporter.
+2. Send to Bencher.
 
-```jsonc
-// .benchmarks.json
+todo:
 
-{
-  "path/to/test.test.ts > description > to > test": {
-    "latency": {
-      "min_value": 0.02334,
-      "value": 0.3434,
-      "max_value": 0.9837483434
-    }
-  }
-  // ... other benchmarks here.
-}
-```
+### Steps
 
 ## FAQ
 
