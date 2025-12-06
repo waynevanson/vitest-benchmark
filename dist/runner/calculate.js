@@ -1,4 +1,4 @@
-import { collapse, conditional, lazy } from "../utils";
+import { collapse, conditional, lazy } from "../utils.js";
 export function calculate(config, context) {
     const cycles = lazy(() => context.samples.map((duration) => 1 / duration));
     const totalDuration = lazy(() => context.samples.reduce((accu, curr) => accu + curr, 0));

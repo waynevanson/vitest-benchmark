@@ -1,4 +1,4 @@
-import { VitestBenchRunnerConfig, BenchRunnerMeta } from "./config";
+import { VitestBenchRunnerConfig, BenchRunnerMeta } from "./config.js";
 export declare function calculate(config: VitestBenchRunnerConfig["results"], context: {
     samples: Array<number>;
     cycles: number;

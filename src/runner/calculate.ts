@@ -1,5 +1,5 @@
-import { collapse, conditional, lazy } from "../utils"
-import { VitestBenchRunnerConfig, BenchRunnerMeta } from "./config"
+import { collapse, conditional, lazy } from "../utils.js"
+import { VitestBenchRunnerConfig, BenchRunnerMeta } from "./config.js"
 
 export function calculate(
   config: VitestBenchRunnerConfig["results"],
