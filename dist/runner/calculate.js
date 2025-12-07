@@ -24,12 +24,12 @@ export function calculate(config, context) {
         max: conditional(config.throughput.max, throughputMax),
         percentiles: conditional(config.throughput.percentiles.length > 0, throughputPercentiles)
     });
-    const schema = collapse({
+    const results = collapse({
         samples: conditional(config.samples, () => context.durations),
         latency,
         throughput
     });
-    return schema;
+    return results;
 }
 // Thanks GPT
 export function calculatePercentile(samples, percentile) {

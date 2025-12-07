@@ -62,13 +62,13 @@ export function calculate(
     )
   })
 
-  const schema = collapse({
+  const results = collapse({
     samples: conditional(config.samples, () => context.durations),
     latency,
     throughput
   })
 
-  return schema
+  return results
 }
 
 // Thanks GPT

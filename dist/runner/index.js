@@ -85,7 +85,7 @@ export default class VitestBenchRunner extends VitestTestRunner {
         }
         const meta = calculate(this.#config.provided.results, { durations, cycles });
         // A place where reporters can read stuff
-        test.meta.benchrunner = meta;
+        test.meta.benchrunner = meta ?? {};
     }
     getHooks(suite) {
         const hooks = this.#hooks.get(suite);
